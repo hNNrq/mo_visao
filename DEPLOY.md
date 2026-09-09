@@ -43,9 +43,11 @@ Em [supabase.com/dashboard](https://supabase.com/dashboard) > **New project**.
 Rodar fora de ordem quebra: o `003` depende das tabelas do `001` e da
 `is_admin()` do `002`.
 
-> O bucket das fotos é criado pelo `003_rls.sql`. **Não crie o bucket na mão**
-> pelo painel — se ele já existir, o `insert into storage.buckets` falha e as
-> políticas de acesso não entram.
+> O bucket das fotos é criado pelo `003_rls.sql`, já marcado como público.
+> **Não crie o bucket na mão pelo painel antes disso.** O insert é
+> `on conflict (id) do nothing`, então ele não falha — ele simplesmente não
+> mexe no bucket que já existe. Se você tiver criado um privado, ele continua
+> privado, e a vitrine fica com as fotos quebradas sem nenhum erro aparecer.
 
 ### 1.3 Criar o login do dono
 
