@@ -57,7 +57,7 @@ npm run dev
 ```bash
 npx supabase start      # sobe Postgres, Auth e Storage em Docker
 npm run local:semear    # cria o login do dono e marca como admin
-npm run local:demo      # popula com óculos e fotos, pra ver com conteúdo
+npm run demo            # popula com óculos e fotos, pra ver com conteúdo
 npm run dev
 ```
 

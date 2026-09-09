@@ -134,6 +134,9 @@ Já feito, não precisa refazer:
 - `config` semeada com as 9 chaves editáveis
 - `henriquenorman@gmail.com` criado no Auth e inserido em `admins`
 - RLS conferido na chave pública: lê produto, não lê `admins`, não escreve
+- **três óculos de demonstração no ar**, com foto, semeados por
+  `npm run demo -- --confirmar` (ver seção 3). São de exemplo: o dono apaga ou
+  edita pelo painel quando cadastrar o estoque de verdade
 
 Falta: **o login do dono**. Hoje o único admin é o do Henrique. Antes de
 entregar, criar o usuário dele em Authentication e inserir na tabela `admins`
@@ -148,6 +151,23 @@ do mesmo jeito.
    apresenta bem
 3. Conferir se a foto aparece no catálogo (se não aparecer, é a pegadinha do
    2.3)
+
+### Atalho: popular a vitrine pra uma demo
+
+Pra mostrar a loja com conteúdo antes de o dono cadastrar o estoque dele:
+
+```bash
+npm run demo -- --confirmar    # sem a flag ele só roda contra o Supabase local
+```
+
+Sobe três óculos com foto, preço e estoque, a partir das imagens de
+`clientes/mo-visao/produtos/`. Casa por slug e só manda foto pra produto que
+ainda não tem nenhuma — rodar de novo não duplica nada. Pra limpar depois, é
+pelo painel, produto por produto.
+
+> As fotos precisam ser **PNG recortado**. O card da vitrine é `object-contain`
+> sobre o creme da marca, então foto com fundo branco chapado vira um quadrado
+> branco dentro do card.
 
 ---
 

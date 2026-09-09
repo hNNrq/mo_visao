@@ -12,7 +12,7 @@
     "testar:concorrencia": "node scripts/testar-concorrencia.mjs",
     "testar:painel": "node scripts/testar-painel.mjs",
     "local:semear": "node scripts/semear-local.mjs",
-    "local:demo": "node scripts/demo-local.mjs"
+    "demo": "node scripts/demo-produtos.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

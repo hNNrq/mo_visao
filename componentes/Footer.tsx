@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="border-t border-white/10 px-6 py-14 sm:px-10">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          {/* único caminho de volta pra home: o header agora é só menu */}
+          {/* volta pra vitrine, igual ao "Início" do header — aqui pra quem chegou no fim */}
           <Link href="/" className="skew-brand inline-block font-marca text-4xl uppercase">
             Mó <span className="text-hot">Visão</span>
           </Link>

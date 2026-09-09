@@ -4,8 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/** Esquerda: navegação do catálogo. */
+/**
+ * Esquerda: navegação do catálogo.
+ *
+ * "Início" abre a lista porque é o caminho de volta pra vitrine de dentro de
+ * qualquer página — sem ele o único jeito de voltar é o nome da marca no rodapé.
+ */
 const LINKS = [
+  { href: "/", texto: "Início" },
   { href: "/produtos", texto: "Produtos" },
   { href: "/produtos?categoria=corrida", texto: "Corrida" },
   { href: "/produtos?categoria=rua", texto: "Rua" },
@@ -14,9 +20,9 @@ const LINKS = [
 /**
  * Direita: a área do cliente.
  *
- * No mobile só o ícone aparece — três rótulos escritos ao lado das três
- * categorias não cabem numa tela de 375px sem encolher tudo a um tamanho
- * ilegível. O texto entra a partir de `sm`.
+ * No mobile só o ícone aparece — três rótulos escritos ao lado das quatro
+ * entradas da esquerda não cabem numa tela de 375px sem encolher tudo a um
+ * tamanho ilegível. O texto entra a partir de `sm`.
  */
 const CONTA = [
   { href: "/carrinho", texto: "Carrinho", icone: IconeCarrinho },
@@ -57,13 +63,20 @@ export function Header() {
           : "border-b border-white/10 bg-ink/90 backdrop-blur"
       }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 sm:gap-6 sm:px-10">
-        <ul className="flex items-center gap-4 sm:gap-8">
+      {/*
+        Os `max-[374px]:` apertam letra e espaçamento abaixo de 375px. Com
+        "Início" a barra passou a ter quatro rótulos e três ícones: em 375 sobra
+        folga, em 320 (iPhone SE 1) o ícone de Conta era empurrado pra fora da
+        tela — e o header é `fixed`, então o corte acontece sem barra de rolagem
+        pra denunciar.
+      */}
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4 max-[374px]:gap-2 sm:gap-6 sm:px-10">
+        <ul className="flex items-center gap-3 max-[374px]:gap-2 sm:gap-8">
           {LINKS.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={`font-sans text-sm tracking-[0.16em] uppercase transition-colors sm:text-base ${cor}`}
+                className={`font-sans text-sm tracking-[0.16em] uppercase transition-colors max-[374px]:text-xs max-[374px]:tracking-[0.1em] sm:text-base ${cor}`}
               >
                 {link.texto}
               </Link>
@@ -71,7 +84,7 @@ export function Header() {
           ))}
         </ul>
 
-        <ul className="flex items-center gap-4 sm:gap-7">
+        <ul className="flex items-center gap-3 max-[374px]:gap-2 sm:gap-7">
           {CONTA.map(({ href, texto, icone: Icone }) => (
             <li key={href}>
               <Link
