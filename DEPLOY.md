@@ -23,8 +23,14 @@ Supabase significa recriar o banco e reconfigurar as chaves.
 
 Em [supabase.com/dashboard](https://supabase.com/dashboard) > **New project**.
 
-- **Region:** `South America (São Paulo)` — o cliente é daqui, e região errada
-  coloca uns 150ms em cada consulta.
+- **Region:** casar com a região das funções da Vercel, que por padrão rodam em
+  Washington (`iad1` / us-east-1). Quem faz consulta ao banco é o servidor da
+  Vercel, não o navegador do visitante — então Supabase em São Paulo com Vercel
+  em Washington é o pior dos dois mundos: cada consulta atravessa o continente.
+  O projeto atual está em `us-east-1`, colado na Vercel, e é o certo pra esse
+  arranjo. Só valeria São Paulo se as funções também fossem movidas pra `gru1`.
+  A latência que o visitante sente é o salto até a Vercel, e o conteúdo estático
+  sai do CDN de qualquer jeito.
 - **Database password:** gera uma forte e guarda. Não é a senha do painel do
   site; é a do banco, e o Supabase não mostra de novo.
 
@@ -115,6 +121,23 @@ O `next.config.ts` monta a lista de hosts autorizados do `next/image` a partir
 da `NEXT_PUBLIC_SUPABASE_URL` — **em tempo de build**. Consequência: se você
 trocar a URL do Supabase depois, tem que **redeployar**, não basta salvar a
 variável. Sem isso as fotos de produto param de carregar sem erro visível.
+
+---
+
+## Estado do projeto (09/09/2026)
+
+Já feito, não precisa refazer:
+
+- projeto `mo_visao` criado (ref `etrgjradkasgpximbpre`, us-east-1)
+- as quatro migrations aplicadas por `supabase db push`
+- bucket `produtos` criado e **público**
+- `config` semeada com as 9 chaves editáveis
+- `henriquenorman@gmail.com` criado no Auth e inserido em `admins`
+- RLS conferido na chave pública: lê produto, não lê `admins`, não escreve
+
+Falta: **o login do dono**. Hoje o único admin é o do Henrique. Antes de
+entregar, criar o usuário dele em Authentication e inserir na tabela `admins`
+do mesmo jeito.
 
 ---
 
