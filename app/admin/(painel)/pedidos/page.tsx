@@ -1,4 +1,5 @@
-import { exigirAdmin } from "@/lib/admin";
+import { exigirAdminNaPagina } from "@/lib/admin";
+import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { ListaPedidos } from "@/componentes/admin/ListaPedidos";
 import type { Pedido, PedidoItem } from "@/lib/types";
 
@@ -7,7 +8,8 @@ export const dynamic = "force-dynamic";
 export type PedidoComItens = Pedido & { itens: PedidoItem[] };
 
 export default async function PaginaPedidos() {
-  const { supabase } = await exigirAdmin();
+  const { supabase, admin, user } = await exigirAdminNaPagina();
+  if (!admin) return <SemAcesso email={user.email} />;
 
   const { data } = await supabase
     .from("pedidos")

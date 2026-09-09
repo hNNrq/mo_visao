@@ -1,25 +1,29 @@
 import "server-only";
+import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
+type Cliente = Awaited<ReturnType<typeof criarClienteServidor>>;
+
 /**
- * Porteiro do painel.
+ * Quem é a pessoa e ela é admin? Sem decidir o que fazer a respeito.
  *
- * O `proxy.ts` redireciona quem não está logado, mas isso protege só a
- * navegação: Server Actions são endpoints POST que respondem a requisição
- * direta, sem passar pela tela. Por isso TODA ação chama isto antes de
- * escrever qualquer coisa.
- *
- * A checagem final ainda é o RLS no banco — aqui é a segunda camada, não a
- * única.
+ * Ter usuário no Supabase Auth e ter linha na tabela `admins` são coisas
+ * separadas: dá pra logar e mesmo assim não ter acesso ao painel. Foi assim
+ * que o acesso caiu em set/2026 — o usuário foi apagado e recriado, e o
+ * `on delete cascade` levou a linha de `admins` junto, sem aviso.
  */
-export async function exigirAdmin() {
+async function verificar(): Promise<{
+  supabase: Cliente;
+  user: Awaited<ReturnType<Cliente["auth"]["getUser"]>>["data"]["user"];
+  admin: boolean;
+}> {
   const supabase = await criarClienteServidor();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) throw new Error("NAO_AUTENTICADO");
+  if (!user) return { supabase, user: null, admin: false };
 
   const { data, error } = await supabase
     .from("admins")
@@ -27,9 +31,47 @@ export async function exigirAdmin() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (error || !data) throw new Error("SEM_PERMISSAO");
+  return { supabase, user, admin: !error && !!data };
+}
+
+/**
+ * Porteiro das Server Actions.
+ *
+ * Estoura de propósito: quem chama são formulários, que capturam o erro e
+ * passam por `mensagemDeErro()` pra virar frase em português. Toda ação que
+ * escreve chama isto antes — Server Actions são endpoints POST alcançáveis por
+ * requisição direta, então a checagem não pode depender de a tela ter sido
+ * carregada.
+ *
+ * A checagem final ainda é o RLS no banco — aqui é a segunda camada, não a
+ * única.
+ */
+export async function exigirAdmin() {
+  const { supabase, user, admin } = await verificar();
+
+  if (!user) throw new Error("NAO_AUTENTICADO");
+  if (!admin) throw new Error("SEM_PERMISSAO");
 
   return { supabase, user };
+}
+
+/**
+ * Porteiro das PÁGINAS do painel.
+ *
+ * Aqui não pode estourar. Em produção o Next apaga a mensagem de erro de
+ * Server Component antes de entregá-la ao `error.tsx` — sobra só o `digest`.
+ * Ou seja: um `throw new Error("SEM_PERMISSAO")` numa página vira uma tela de
+ * erro de servidor sem pista nenhuma, que foi exatamente o que aconteceu.
+ *
+ * Então sessão ausente vira redirect (que não é erro), e falta de permissão
+ * volta como `admin: false` pra página renderizar <SemAcesso />.
+ */
+export async function exigirAdminNaPagina() {
+  const { supabase, user, admin } = await verificar();
+
+  if (!user) redirect("/admin/entrar");
+
+  return { supabase, user, admin };
 }
 
 /** Traduz o erro técnico numa frase que o dono entende. */

@@ -74,6 +74,13 @@ select id, 'Mó Visão' from auth.users where email = 'EMAIL_DO_DONO';
 Sem essa linha o login funciona e o painel responde "Você não tem acesso a
 essa área".
 
+> ⚠️ **Nunca apague um usuário do Auth pra "resetar a senha".** A coluna
+> `admins.user_id` referencia `auth.users(id)` com `on delete cascade`: apagar o
+> usuário apaga a linha de `admins` junto, sem aviso. O usuário recriado vem com
+> um UUID novo, então o login passa e o painel recusa. Pra trocar senha, edite o
+> usuário existente em **Authentication > Users**. Se já aconteceu, rode o
+> `insert` acima de novo — ele repara.
+
 ### 1.4 Pegar as chaves
 
 **Project Settings** > **API**:

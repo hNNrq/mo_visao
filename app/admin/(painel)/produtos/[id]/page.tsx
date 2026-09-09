@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormProduto } from "@/componentes/admin/FormProduto";
 import { GerenciadorFotos } from "@/componentes/admin/GerenciadorFotos";
-import { exigirAdmin } from "@/lib/admin";
+import { exigirAdminNaPagina } from "@/lib/admin";
+import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import type { Produto, ProdutoFoto } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ type Props = {
 export default async function PaginaEditarProduto({ params, searchParams }: Props) {
   const { id } = await params;
   const { salvo } = await searchParams;
-  const { supabase } = await exigirAdmin();
+  const { supabase, admin, user } = await exigirAdminNaPagina();
+  if (!admin) return <SemAcesso email={user.email} />;
 
   const { data: produto } = await supabase
     .from("produtos")

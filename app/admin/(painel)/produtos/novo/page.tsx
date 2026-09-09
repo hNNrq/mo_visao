@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { FormProduto } from "@/componentes/admin/FormProduto";
-import { exigirAdmin } from "@/lib/admin";
+import { exigirAdminNaPagina } from "@/lib/admin";
+import { SemAcesso } from "@/componentes/admin/SemAcesso";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaNovoProduto() {
-  await exigirAdmin();
+  const { admin, user } = await exigirAdminNaPagina();
+  if (!admin) return <SemAcesso email={user.email} />;
 
   return (
     <div>

@@ -1,10 +1,12 @@
-import { exigirAdmin } from "@/lib/admin";
+import { exigirAdminNaPagina } from "@/lib/admin";
+import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { FormConfig } from "@/componentes/admin/FormConfig";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaConfig() {
-  const { supabase } = await exigirAdmin();
+  const { supabase, admin, user } = await exigirAdminNaPagina();
+  if (!admin) return <SemAcesso email={user.email} />;
 
   const { data } = await supabase.from("config").select("chave, valor");
   const config = Object.fromEntries((data ?? []).map((c) => [c.chave, c.valor]));

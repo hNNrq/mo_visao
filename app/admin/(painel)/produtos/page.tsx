@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { exigirAdmin } from "@/lib/admin";
+import { exigirAdminNaPagina } from "@/lib/admin";
+import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { ListaProdutos } from "@/componentes/admin/ListaProdutos";
 import type { ProdutoComFotos } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaProdutosAdmin() {
-  const { supabase } = await exigirAdmin();
+  const { supabase, admin, user } = await exigirAdminNaPagina();
+  if (!admin) return <SemAcesso email={user.email} />;
 
   // aqui, ao contrário da vitrine, os inativos também aparecem —
   // é onde ele volta pra republicar um produto que tinha escondido
