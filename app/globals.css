@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* ==========================================================
+   Mó Visão — design tokens
+   Herdados das peças de conteúdo (clientes/mo-visao/conteudo/base.css),
+   que já validaram a identidade no Instagram.
+   ========================================================== */
+
+@theme {
+  --color-ink:      #050505;  /* fundo principal */
+  --color-steel:    #14161A;  /* cards, blocos secundários */
+  --color-paper:    #EFEDE9;  /* seções claras */
+  --color-hot:      #E01B12;  /* destaque, CTA, preço */
+  --color-hot-dark: #B01410;  /* hover do CTA */
+  --color-smoke:    #8E959E;  /* texto secundário */
+
+  --font-display: var(--font-saira), "Arial Narrow", system-ui, sans-serif;
+  --font-sans:    var(--font-barlow), system-ui, sans-serif;
+
+  /* Fonte do NOME DA MARCA. Trocar aqui basta pra mudar em todo o site.
+     A definitiva é a Hard Zone (ver @font-face abaixo); a Anton
+     (--font-marca-familia) é o fallback enquanto a licença não entra. */
+  --font-marca:   "Hard Zone Demo", var(--font-marca-familia), var(--font-saira), system-ui, sans-serif;
+}
+
+/* ==========================================================
+   ⚠️ TEMPORÁRIO — Hard Zone, versão DEMO de uso pessoal
+   ==========================================================
+   Está aqui só pra apresentar o layout ao dono da loja. O arquivo
+   `public/hard-zone-demo.ttf` é ignorado pelo git de propósito: num deploy
+   feito de checkout limpo ele não existe, o @font-face falha e a marca cai na
+   Anton — que tem licença livre. É o que impede a fonte sem licença de ir ao ar
+   por descuido.
+
+   `font-display: swap` é essencial aqui: com `block` o nome ficaria invisível
+   até o arquivo faltante dar timeout.
+
+   Quando a licença comercial + webfont for comprada: trocar o .ttf pelo .woff2
+   licenciado, tirar o /public do .gitignore, e apagar este aviso.
+   ========================================================== */
+
+@font-face {
+  font-family: "Hard Zone Demo";
+  src: url("/hard-zone-demo.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  --chrome: linear-gradient(180deg, #fff 0%, #D8DCE2 42%, #8E959E 52%, #F2F4F7 68%, #B9BFC7 100%);
+}
+
+body {
+  background: var(--color-ink);
+  color: #fff;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================
+   Assinatura da marca
+   O skew de -12° é o que faz parecer Mó Visão. Mas em site inteiro
+   cansa e atrapalha a leitura — usar SÓ em título, botão e faixa.
+   Nunca em corpo de texto ou card de produto.
+   ========================================================== */
+
+@utility skew-brand {
+  transform: skewX(-12deg);
+  transform-origin: left bottom;
+}
+
+/* devolve o conteúdo ao eixo dentro de um pai com skew-brand */
+@utility unskew {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+@utility text-chrome {
+  background: var(--chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* listras diagonais de fundo, tipo adesivo de envelopamento */
+@utility stripes {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 255 255 / 0.045) 0px, rgb(255 255 255 / 0.045) 3px,
+    transparent 3px, transparent 26px
+  );
+}
+
+@utility stripes-dark {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(0 0 0 / 0.05) 0px, rgb(0 0 0 / 0.05) 3px,
+    transparent 3px, transparent 26px
+  );
+}
+
+/* ==========================================================
+   Acessibilidade
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-hot);
+  outline-offset: 2px;
+}

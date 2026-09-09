@@ -1,0 +1,14 @@
+# Segunda tranca pra fonte sem licença.
+#
+# No deploy por git quem manda é o .gitignore, e a demo já está de fora. Mas o
+# `vercel` CLI sobe a pasta local, e quando existe .vercelignore ele passa a
+# usar ESTE arquivo no lugar do .gitignore — por isso as entradas normais
+# precisam estar repetidas aqui. Sem isso, subir pela CLI publicaria o .ttf.
+
+node_modules
+.next
+.env*
+!.env.example
+
+# demo de uso pessoal — nunca vai pro ar
+public/hard-zone-demo.ttf

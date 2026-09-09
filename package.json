@@ -1,0 +1,41 @@
+{
+  "name": "site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "testar": "node scripts/testar-estoque.mjs",
+    "preparar-hero": "node scripts/preparar-hero.js public/hero-original.jpg public/hero.jpg",
+    "testar:concorrencia": "node scripts/testar-concorrencia.mjs",
+    "testar:painel": "node scripts/testar-painel.mjs",
+    "local:semear": "node scripts/semear-local.mjs",
+    "local:demo": "node scripts/demo-local.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.115.0",
+    "browser-image-compression": "^2.0.2",
+    "mercadopago": "^3.6.0",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "pg": "^8.23.0",
+    "playwright": "^1.63.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
