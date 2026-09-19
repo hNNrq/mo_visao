@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Aviso } from "@/componentes/admin/Aviso";
 import { mudarStatusPedido } from "@/app/admin/acoes";
 import { precoBRL } from "@/lib/format";
 import type { PedidoComItens } from "@/app/admin/(painel)/pedidos/page";
@@ -22,14 +23,6 @@ const PROXIMO: Partial<Record<PedidoStatus, { valor: string; texto: string }[]>>
   pendente: [],
 };
 
-const CORES: Record<string, string> = {
-  pago: "border-hot/60 bg-hot/15 text-white",
-  separado: "border-white/30 text-white",
-  entregue: "border-white/15 text-white/50",
-  cancelado: "border-white/15 text-white/40",
-  expirado: "border-white/15 text-white/40",
-};
-
 const NOMES: Record<string, string> = {
   pago: "Pago — separar",
   separado: "Separado",
@@ -38,33 +31,43 @@ const NOMES: Record<string, string> = {
   expirado: "Expirado",
 };
 
+/**
+ * Só o pedido que PEDE alguma coisa dele leva carimbo de ouro. Separado,
+ * entregue e cancelado são letra miúda: se todo estado brilhar, brilhar para
+ * de significar "olha aqui".
+ */
+const CARIMBADO: Record<string, boolean> = { pago: true };
+
 export function ListaPedidos({ pedidos }: { pedidos: PedidoComItens[] }) {
   return (
-    <ul className="flex flex-col gap-4">
+    <ul>
       {pedidos.map((p) => (
-        <CartaoPedido key={p.id} pedido={p} />
+        <BlocoPedido key={p.id} pedido={p} />
       ))}
     </ul>
   );
 }
 
-function CartaoPedido({ pedido }: { pedido: PedidoComItens }) {
+function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
 
   const acoes = PROXIMO[pedido.status] ?? [];
   const entrega = pedido.entrega as Record<string, string>;
+  const carimbado = CARIMBADO[pedido.status];
 
   return (
     <li
-      className={`rounded border border-white/10 bg-steel p-4 ${
+      className={`border-b border-paper/10 py-6 transition-opacity last:border-b-0 ${
         pendente ? "opacity-60" : ""
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div>
-          <p className="font-display text-xl font-bold uppercase">{pedido.numero}</p>
-          <p className="font-sans text-sm text-white/45">
+          <p className="numeros font-display text-2xl leading-none font-black tracking-tight uppercase text-paper">
+            {pedido.numero}
+          </p>
+          <p className="numeros mt-1.5 font-sans text-sm tracking-wide text-smoke">
             {new Date(pedido.created_at).toLocaleString("pt-BR", {
               day: "2-digit",
               month: "2-digit",
@@ -75,44 +78,58 @@ function CartaoPedido({ pedido }: { pedido: PedidoComItens }) {
           </p>
         </div>
 
-        <span
-          className={`rounded border px-3 py-1 font-display text-sm font-bold uppercase ${
-            CORES[pedido.status] ?? "border-white/15 text-white/50"
-          }`}
-        >
-          {NOMES[pedido.status] ?? pedido.status}
-        </span>
+        {carimbado ? (
+          <span className="carimbo skew-brand inline-block bg-gold px-3 py-1.5 font-display text-sm font-black tracking-tight uppercase text-ink">
+            <span className="unskew">{NOMES[pedido.status] ?? pedido.status}</span>
+          </span>
+        ) : (
+          <span className="font-sans text-sm tracking-[0.16em] uppercase text-smoke">
+            {NOMES[pedido.status] ?? pedido.status}
+          </span>
+        )}
       </div>
 
-      <ul className="mt-4 flex flex-col gap-1 border-t border-white/10 pt-3">
+      <ul className="mt-5 flex flex-col gap-1.5">
         {pedido.itens?.map((item) => (
-          <li key={item.id} className="flex justify-between gap-3 font-sans">
-            <span className="text-white/80">
-              {item.quantidade}x {item.nome_snapshot}
+          <li key={item.id} className="flex justify-between gap-4 font-sans text-lg">
+            <span className="text-paper/85">
+              <span className="numeros">{item.quantidade}x</span>{" "}
+              {item.nome_snapshot}
             </span>
-            <span className="shrink-0 text-white/60">
+            <span className="numeros shrink-0 text-smoke">
               {precoBRL(item.preco_snapshot_centavos * item.quantidade)}
             </span>
           </li>
         ))}
-        <li className="mt-2 flex justify-between gap-3 border-t border-white/10 pt-2 font-display text-lg font-bold">
-          <span>Total</span>
-          <span className="text-hot">{precoBRL(pedido.total_centavos)}</span>
-        </li>
       </ul>
 
-      <div className="mt-4 border-t border-white/10 pt-3 font-sans text-sm text-white/70">
-        <p className="text-white">{pedido.cliente_nome}</p>
-        <p>
-          <a href={`tel:${pedido.cliente_telefone}`} className="underline underline-offset-4">
+      <p className="mt-3 flex items-baseline justify-between gap-4">
+        <span className="font-sans text-base tracking-[0.16em] uppercase text-smoke">
+          Total
+        </span>
+        <span className="numeros font-display text-2xl font-black tracking-tight text-gold">
+          {precoBRL(pedido.total_centavos)}
+        </span>
+      </p>
+
+      <div className="mt-5 font-sans text-lg leading-snug">
+        <p className="text-paper">{pedido.cliente_nome}</p>
+        <p className="numeros text-smoke">
+          <a
+            href={`tel:${pedido.cliente_telefone}`}
+            className="underline underline-offset-4 transition-colors hover:text-gold"
+          >
             {pedido.cliente_telefone}
           </a>
           {" · "}
-          <a href={`mailto:${pedido.cliente_email}`} className="underline underline-offset-4">
+          <a
+            href={`mailto:${pedido.cliente_email}`}
+            className="underline underline-offset-4 transition-colors hover:text-gold"
+          >
             {pedido.cliente_email}
           </a>
         </p>
-        <p className="mt-1 text-white/50">
+        <p className="mt-1 text-smoke">
           {pedido.entrega_tipo === "retirada"
             ? "Retirada"
             : pedido.entrega_tipo === "correios"
@@ -123,7 +140,7 @@ function CartaoPedido({ pedido }: { pedido: PedidoComItens }) {
       </div>
 
       {acoes.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2.5">
           {acoes.map((a) => (
             <button
               key={a.valor}
@@ -135,21 +152,21 @@ function CartaoPedido({ pedido }: { pedido: PedidoComItens }) {
                   if (!r.ok) setErro(r.erro ?? "Não deu certo.");
                 });
               }}
-              className={`rounded px-4 py-3 font-display text-sm font-bold uppercase transition-colors ${
+              className={`skew-brand px-4 py-3 font-display text-sm font-black tracking-tight uppercase transition-colors ${
                 a.valor === "cancelado"
-                  ? "border border-white/20 text-white/60 hover:text-hot"
-                  : "bg-hot text-white hover:bg-hot-dark"
+                  ? "bg-paper/10 text-paper/70 hover:bg-paper/20"
+                  : "carimbo bg-gold text-ink hover:bg-gold-deep"
               }`}
             >
-              {a.texto}
+              <span className="unskew">{a.texto}</span>
             </button>
           ))}
         </div>
       )}
 
       {erro && (
-        <p role="alert" className="mt-3 font-sans text-sm text-hot">
-          {erro}
+        <p role="alert" className="mt-3">
+          <Aviso>{erro}</Aviso>
         </p>
       )}
     </li>

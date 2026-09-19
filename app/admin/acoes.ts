@@ -55,7 +55,8 @@ const esquemaProduto = z.object({
   descricao: z.string().trim().optional(),
   preco: z.string(),
   estoque: z.string(),
-  categoria: z.enum(["corrida", "rua"]),
+  // sem `categoria`: a separação por tipo saiu da loja em set/2026 e a coluna
+  // no banco vive do default dela. Ver `componentes/admin/FormProduto.tsx`.
   destaque: z.boolean(),
 });
 
@@ -86,7 +87,6 @@ export async function salvarProduto(
       descricao: form.get("descricao") ?? undefined,
       preco: String(form.get("preco") ?? ""),
       estoque: String(form.get("estoque") ?? ""),
-      categoria: form.get("categoria") ?? "rua",
       destaque: form.get("destaque") === "on",
     });
 
@@ -111,7 +111,6 @@ export async function salvarProduto(
       descricao: dados.data.descricao || null,
       preco_centavos: preco,
       estoque,
-      categoria: dados.data.categoria,
       destaque: dados.data.destaque,
     };
 

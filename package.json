@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "testar": "node scripts/testar-estoque.mjs",
-    "preparar-hero": "node scripts/preparar-hero.js public/hero-original.jpg public/hero.jpg",
+    "preparar-juliet": "node scripts/preparar-recorte.js public/hero-juliet-original.png public/hero-juliet.png --margem 0.03",
     "testar:concorrencia": "node scripts/testar-concorrencia.mjs",
     "testar:painel": "node scripts/testar-painel.mjs",
     "local:semear": "node scripts/semear-local.mjs",

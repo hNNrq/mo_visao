@@ -1,28 +1,38 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 /**
- * Esquerda: navegação do catálogo.
+ * A faixa de utilidade da prancha.
  *
- * "Início" abre a lista porque é o caminho de volta pra vitrine de dentro de
- * qualquer página — sem ele o único jeito de voltar é o nome da marca no rodapé.
+ * Numa folha de desenho técnico a borda de cima carrega a identificação da
+ * folha — não um menu de loja. Aqui ela é isso: um fio de régua embaixo, rótulos
+ * em corpo miúdo na face do dado, e nada mais. Sem logo, sem barra de promoção,
+ * sem "frete grátis 🔥", sem carrossel por baixo.
+ *
+ * ⚠️ **A faixa é opaca e SEMPRE visível, e isso mudou em set/2026.** Antes ela
+ * nascia transparente na home e ganhava fundo depois de 70% da altura da janela,
+ * o que exigia um listener de scroll e um componente de cliente. Numa prancha a
+ * borda da folha não some quando você olha o desenho: ela é a folha. O
+ * componente virou servidor e o listener saiu.
+ *
+ * ⚠️ **"Rua" e "Corrida" saíram em set/2026, a pedido do Henrique.** A loja não
+ * separa óculos por tipo: é catálogo único. Não recolocar. Os modelos também não
+ * entram aqui — eles são o ÍNDICE da home e têm linha no cartucho do rodapé.
  */
 const LINKS = [
   { href: "/", texto: "Início" },
-  { href: "/produtos", texto: "Produtos" },
-  { href: "/produtos?categoria=corrida", texto: "Corrida" },
-  { href: "/produtos?categoria=rua", texto: "Rua" },
+  { href: "/produtos", texto: "Catálogo" },
 ];
 
 /**
- * Direita: a área do cliente.
+ * A área do cliente.
  *
- * No mobile só o ícone aparece — três rótulos escritos ao lado das quatro
- * entradas da esquerda não cabem numa tela de 375px sem encolher tudo a um
- * tamanho ilegível. O texto entra a partir de `sm`.
+ * No celular só o ícone aparece — três rótulos escritos ao lado dos da esquerda
+ * não cabem em 375px sem encolher tudo a um corpo ilegível.
+ *
+ * ⚠️ **O alvo de toque é maior que o desenho do ícone.** `py-3 -my-3 px-2 -mx-2`
+ * dá 44px de área tocável sem mudar uma linha do layout: o ícone continua com
+ * 20px na tela e o dedo ganha o resto. Os três já foram 20x20 de alvo real, que
+ * é menos da metade do mínimo — e o público usa isso em pé, no ônibus.
  */
 const CONTA = [
   { href: "/carrinho", texto: "Carrinho", icone: IconeCarrinho },
@@ -30,66 +40,29 @@ const CONTA = [
   { href: "/conta", texto: "Conta", icone: IconeConta },
 ];
 
-/**
- * Na home o header flutua por cima da hero clara, então nasce transparente e
- * com texto escuro. Ao passar da hero, vira a barra preta padrão.
- * Nas outras páginas já começa preta.
- */
+const ROTULO =
+  "font-sans text-sm font-medium tracking-[0.18em] uppercase text-paper/70 transition-colors hover:text-gold max-[374px]:tracking-[0.1em] sm:text-base";
+
 export function Header() {
-  const naHome = usePathname() === "/";
-  const [passouDaHero, setPassouDaHero] = useState(false);
-
-  useEffect(() => {
-    if (!naHome) return;
-
-    const aoRolar = () =>
-      setPassouDaHero(window.scrollY > window.innerHeight * 0.8);
-
-    aoRolar(); // cobre o caso de recarregar já rolado
-    window.addEventListener("scroll", aoRolar, { passive: true });
-    return () => window.removeEventListener("scroll", aoRolar);
-  }, [naHome]);
-
-  const claro = naHome && !passouDaHero;
-  const cor = claro
-    ? "text-ink/70 hover:text-ink"
-    : "text-white/70 hover:text-white";
-
   return (
-    <header
-      className={`fixed top-0 right-0 left-0 z-50 transition-colors duration-300 ${
-        claro
-          ? "border-b border-transparent bg-transparent"
-          : "border-b border-white/10 bg-ink/90 backdrop-blur"
-      }`}
-    >
-      {/*
-        Os `max-[374px]:` apertam letra e espaçamento abaixo de 375px. Com
-        "Início" a barra passou a ter quatro rótulos e três ícones: em 375 sobra
-        folga, em 320 (iPhone SE 1) o ícone de Conta era empurrado pra fora da
-        tela — e o header é `fixed`, então o corte acontece sem barra de rolagem
-        pra denunciar.
-      */}
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4 max-[374px]:gap-2 sm:gap-6 sm:px-10">
-        <ul className="flex items-center gap-3 max-[374px]:gap-2 sm:gap-8">
+    <header className="fixed top-0 right-0 left-0 z-50 border-b regua bg-ink">
+      <nav className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-5 py-2.5 max-[374px]:gap-2 sm:gap-6 sm:px-10">
+        <ul className="flex items-center gap-4 max-[374px]:gap-3 sm:gap-8">
           {LINKS.map((link) => (
             <li key={link.href}>
-              <Link
-                href={link.href}
-                className={`font-sans text-sm tracking-[0.16em] uppercase transition-colors max-[374px]:text-xs max-[374px]:tracking-[0.1em] sm:text-base ${cor}`}
-              >
+              <Link href={link.href} className={`flex min-h-11 items-center px-1 ${ROTULO}`}>
                 {link.texto}
               </Link>
             </li>
           ))}
         </ul>
 
-        <ul className="flex items-center gap-3 max-[374px]:gap-2 sm:gap-7">
+        <ul className="flex items-center gap-1 sm:gap-4">
           {CONTA.map(({ href, texto, icone: Icone }) => (
             <li key={href}>
               <Link
                 href={href}
-                className={`flex items-center gap-2 font-sans text-sm tracking-[0.16em] uppercase transition-colors ${cor}`}
+                className={`flex min-h-11 min-w-11 items-center justify-center gap-2 px-2 ${ROTULO}`}
               >
                 <Icone />
                 <span className="hidden sm:inline">{texto}</span>
@@ -105,16 +78,18 @@ export function Header() {
 
 /*
   Ícones inline: são três, de traço simples, e herdam a cor do link — não vale
-  uma dependência de biblioteca de ícones por causa disso.
+  uma dependência de biblioteca de ícones por causa disso. O traço acompanha o
+  da prancha (1.25), não o de interface (1.8): numa folha de desenho existe uma
+  espessura de pena só.
 */
 
 const TRACO = {
-  width: 20,
-  height: 20,
+  width: 18,
+  height: 18,
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.8,
+  strokeWidth: 1.5,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   "aria-hidden": true,

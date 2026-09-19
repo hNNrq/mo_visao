@@ -4,6 +4,11 @@
  * `npx supabase gen types typescript --project-id <id> > lib/database.types.ts`.
  */
 
+/**
+ * ⚠️ Espelha a coluna `categoria`, que continua existindo no banco — mas a loja
+ * NÃO separa óculos por tipo desde set/2026, e nada na interface lê esse valor.
+ * Produto novo entra com o default do banco. Não voltar a usar sem pedido.
+ */
 export type Categoria = "corrida" | "rua";
 
 export type PedidoStatus =

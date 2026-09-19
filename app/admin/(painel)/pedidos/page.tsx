@@ -1,6 +1,8 @@
 import { exigirAdminNaPagina } from "@/lib/admin";
+import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { ListaPedidos } from "@/componentes/admin/ListaPedidos";
+import { Vazio } from "@/componentes/admin/Vazio";
 import type { Pedido, PedidoItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,25 +30,28 @@ export default async function PaginaPedidos() {
 
   const pedidos = (data ?? []) as unknown as PedidoComItens[];
 
+  // o número que muda o dia dele é quantos estão esperando ser separados
+  const separar = pedidos.filter((p) => p.status === "pago").length;
+
+  const contagem = [
+    `${pedidos.length} ${pedidos.length === 1 ? "pedido" : "pedidos"}`,
+    separar > 0 ? `${separar} pra separar` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div>
-      <h1 className="font-display text-3xl font-black uppercase">Pedidos</h1>
-      <p className="mt-1 mb-6 font-sans text-white/50">
-        {pedidos.length === 0
-          ? "Nenhum pedido ainda"
-          : `${pedidos.length} ${pedidos.length === 1 ? "pedido" : "pedidos"}`}
-      </p>
+      <Cabecalho
+        titulo="Pedidos"
+        contagem={pedidos.length === 0 ? undefined : contagem}
+      />
 
       {pedidos.length === 0 ? (
-        <div className="rounded border border-dashed border-white/20 px-6 py-14 text-center">
-          <p className="font-display text-xl font-bold uppercase text-white/70">
-            Ainda não entrou pedido
-          </p>
-          <p className="mx-auto mt-3 max-w-[42ch] font-sans text-white/50">
-            Quando alguém comprar e o pagamento for confirmado, o pedido aparece
-            aqui com o contato e o endereço.
-          </p>
-        </div>
+        <Vazio
+          titulo="Ainda não entrou pedido"
+          texto="Quando alguém comprar e o pagamento for confirmado, o pedido aparece aqui com o contato e o endereço."
+        />
       ) : (
         <ListaPedidos pedidos={pedidos} />
       )}

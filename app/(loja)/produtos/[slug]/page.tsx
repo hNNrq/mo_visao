@@ -64,42 +64,43 @@ export default async function PaginaProduto({ params }: Props) {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-6 pt-28 pb-16 sm:px-10">
+    <main className="bg-ink px-5 pt-28 pb-24 sm:px-10 sm:pt-32 sm:pb-32">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="mx-auto grid max-w-[1600px] gap-12 lg:grid-cols-[minmax(0,46%)_1fr] lg:gap-20">
         <Galeria fotos={produto.fotos} nome={produto.nome} />
 
         <div>
-          <p className="font-sans text-sm tracking-[0.2em] uppercase text-smoke">
+          <p className="font-sans text-sm tracking-[0.18em] uppercase text-smoke">
             {produto.marca ?? "Óculos"}
-            {produto.categoria === "corrida" ? " · Corrida" : " · Rua"}
           </p>
 
-          <h1 className="skew-brand mt-3 font-display text-[clamp(2.25rem,6vw,3.75rem)] leading-none font-black uppercase">
+          <h1 className="mt-4 font-display text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.9] font-black tracking-tight text-balance uppercase text-paper">
             {produto.nome}
           </h1>
 
           {produto.modelo && (
-            <p className="mt-3 font-sans text-lg text-white/60">{produto.modelo}</p>
+            <p className="mt-4 font-sans text-xl text-smoke">{produto.modelo}</p>
           )}
 
-          <div className="mt-8">
-            <p className="font-display text-4xl font-black text-hot sm:text-5xl">
-              {precoBRL(produto.preco_centavos)}
+          <div className="mt-9">
+            <p>
+              <span className="numeros carimbo skew-brand inline-block bg-gold px-5 py-2.5 font-display text-4xl font-black tracking-tight text-ink sm:text-5xl">
+                <span className="unskew">{precoBRL(produto.preco_centavos)}</span>
+              </span>
             </p>
             {parcelas && (
-              <p className="mt-2 font-sans text-white/60">
+              <p className="numeros mt-3 font-sans text-lg text-smoke">
                 ou {parcelas.parcelas}x de {parcelas.valor}
               </p>
             )}
           </div>
 
           {produto.descricao && (
-            <p className="mt-8 max-w-[46ch] font-sans text-lg leading-relaxed text-white/75">
+            <p className="mt-9 max-w-[46ch] font-sans text-xl leading-snug text-paper/80">
               {produto.descricao}
             </p>
           )}
@@ -108,7 +109,7 @@ export default async function PaginaProduto({ params }: Props) {
             {disponivel ? (
               <>
                 {ultimas && (
-                  <p className="mb-3 font-sans text-sm tracking-[0.16em] uppercase text-hot">
+                  <p className="numeros mb-4 font-sans text-base tracking-[0.16em] uppercase text-gold">
                     {produto.disponivel === 1
                       ? "Última unidade"
                       : `Últimas ${produto.disponivel} unidades`}
@@ -118,16 +119,17 @@ export default async function PaginaProduto({ params }: Props) {
                 <button
                   type="button"
                   disabled
-                  className="skew-brand w-full bg-hot px-10 py-5 font-display text-2xl font-black uppercase text-white disabled:opacity-60 sm:w-auto"
+                  className="carimbo skew-brand w-full bg-gold px-10 py-5 font-display text-2xl font-black tracking-tight uppercase text-ink disabled:opacity-55 sm:w-auto"
                 >
                   <span className="unskew">Comprar</span>
                 </button>
-                <p className="mt-3 font-sans text-sm text-smoke">
-                  Checkout entra na próxima fase.
+                <p className="mt-4 max-w-[46ch] font-sans text-base text-smoke">
+                  A compra pelo site ainda não abriu. Chama no Instagram que a
+                  gente reserva essa.
                 </p>
               </>
             ) : (
-              <p className="skew-brand inline-block border border-white/25 px-8 py-4 font-display text-xl font-black uppercase text-white/60">
+              <p className="skew-brand inline-block bg-paper/10 px-8 py-4 font-display text-xl font-black tracking-tight uppercase text-smoke">
                 <span className="unskew">Esgotado</span>
               </p>
             )}

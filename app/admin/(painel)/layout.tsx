@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sair } from "@/app/admin/acoes";
+import { Abas } from "@/componentes/admin/Abas";
 
 export const metadata: Metadata = {
   title: "Painel",
@@ -8,43 +9,42 @@ export const metadata: Metadata = {
 };
 
 /**
- * Layout do painel.
+ * Layout do painel — o quadro de preços do balcão.
  *
  * Ele usa isso pelo celular, entre um corte e outro. Por isso:
  *  - navegação fixa embaixo no mobile (onde o polegar alcança), no topo no desktop
  *  - alvos de toque grandes
  *  - nada de tabela larga que rola pro lado
+ *
+ * A medida aqui é de trabalho (900px), não a da vitrine (1600px): uma lista de
+ * cinco elementos esticada até 1600px vira olho indo e voltando na tela.
  */
-
-const ABAS = [
-  { href: "/admin/produtos", texto: "Produtos" },
-  { href: "/admin/pedidos", texto: "Pedidos" },
-  { href: "/admin/config", texto: "Ajustes" },
-];
-
 export default function LayoutAdmin({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-ink pb-24 sm:pb-0">
-      <div className="border-b border-white/10 bg-steel">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-5 py-4">
+    <div className="min-h-screen bg-ink pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
+      <header className="bg-steel">
+        <div className="mx-auto flex max-w-[900px] items-center justify-between gap-4 px-5 py-1.5 sm:px-8 sm:py-2.5">
           <Link
             href="/admin/produtos"
-            className="skew-brand inline-block font-marca text-xl uppercase sm:text-2xl"
+            className="skew-brand inline-block py-2.5 font-marca text-xl leading-none font-black uppercase text-paper sm:text-2xl"
           >
-            Mó <span className="text-hot">Visão</span>
+            Mó <span className="text-gold">Visão</span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          {/* Alvos de polegar, não links de rodapé: um deles desloga ele no meio
+              da tarefa. "Sair" vem mais apagado de propósito — é a ação que ele
+              menos quer tocar por engano. */}
+          <div className="flex items-center gap-1">
             <Link
               href="/"
-              className="font-sans text-sm tracking-wide text-white/50 hover:text-white"
+              className="px-2 py-3 font-sans text-sm tracking-[0.16em] uppercase text-paper/80 transition-colors hover:text-gold"
             >
               Ver a loja
             </Link>
             <form action={sair}>
               <button
                 type="submit"
-                className="font-sans text-sm tracking-wide text-white/50 hover:text-hot"
+                className="px-2 py-3 font-sans text-sm tracking-[0.16em] uppercase text-smoke transition-colors hover:text-gold"
               >
                 Sair
               </button>
@@ -53,32 +53,18 @@ export default function LayoutAdmin({ children }: { children: React.ReactNode })
         </div>
 
         {/* desktop: abas no topo */}
-        <nav className="mx-auto hidden max-w-4xl gap-1 px-5 sm:flex">
-          {ABAS.map((aba) => (
-            <Link
-              key={aba.href}
-              href={aba.href}
-              className="border-b-2 border-transparent px-4 py-3 font-display text-lg font-bold uppercase text-white/60 transition-colors hover:border-hot hover:text-white"
-            >
-              {aba.texto}
-            </Link>
-          ))}
-        </nav>
-      </div>
+        <Abas onde="topo" />
+      </header>
 
-      <main className="mx-auto max-w-4xl px-5 py-6">{children}</main>
+      <main className="mx-auto max-w-[900px] px-5 py-7 sm:px-8 sm:py-10">
+        {children}
+      </main>
 
-      {/* mobile: barra fixa embaixo, na altura do polegar */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t border-white/10 bg-steel sm:hidden">
-        {ABAS.map((aba) => (
-          <Link
-            key={aba.href}
-            href={aba.href}
-            className="py-4 text-center font-display text-base font-bold uppercase text-white/70 active:bg-white/10"
-          >
-            {aba.texto}
-          </Link>
-        ))}
+      {/* Mobile: barra fixa embaixo, na altura do polegar. O respiro de baixo é
+          a faixa do gesto do aparelho — sem ele os rótulos ficam debaixo da
+          barrinha do sistema, justo no aparelho que é a tela principal daqui. */}
+      <nav className="fixed inset-x-0 bottom-0 z-50 bg-steel pb-[env(safe-area-inset-bottom)] sm:hidden">
+        <Abas onde="pe" />
       </nav>
     </div>
   );

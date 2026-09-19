@@ -6,31 +6,42 @@ import Link from "next/link";
  * Carrinho, conta e pedidos já estão no menu, mas o checkout é fase seguinte.
  * Sem isso os três links caem no 404 — que lê como site quebrado, e não como
  * funcionalidade que ainda vem.
+ *
+ * Sem etiqueta acima do título: o título aguenta sozinho, e rótulo pendurado em
+ * cima de manchete é enfeite que rouba a primeira linha de leitura.
+ *
+ * 🔴 **O título aqui NÃO usa `Esticar`.** A `Esticar` põe `whitespace-nowrap` na
+ * linha pra poder medi-la, e o que chega aqui é FRASE, não nome: "Ainda não dá
+ * pra fechar aqui" numa linha só, no corpo mínimo de 36px, pede 553px de
+ * largura — em tela de 320px a página ganhava rolagem lateral, e as três telas
+ * de "em breve" vazavam de 320 até 1024px. Esticar é pra nome de marca e nome de
+ * seção. Frase quebra em linha e usa `text-balance`, na mesma voz de cartaz.
  */
 export function EmBreve({
-  etiqueta,
   titulo,
   texto,
 }: {
-  etiqueta: string;
   titulo: string;
   texto: string;
 }) {
   return (
-    <main className="mx-auto flex min-h-[60vh] max-w-3xl flex-col justify-center px-6 pt-28 pb-20 sm:px-10">
-      <p className="skew-brand inline-block self-start border-l-[6px] border-hot pl-4 font-display text-sm font-extrabold tracking-[0.16em] uppercase text-hot">
-        {etiqueta}
-      </p>
-      <h1 className="skew-brand mt-6 font-display text-[clamp(2.5rem,9vw,5rem)] leading-none font-black uppercase">
-        {titulo}
-      </h1>
-      <p className="mt-6 max-w-[42ch] font-sans text-lg text-white/70">{texto}</p>
-      <Link
-        href="/produtos"
-        className="skew-brand mt-10 inline-block self-start bg-hot px-8 py-4 font-display text-xl font-black uppercase text-white transition-colors hover:bg-hot-dark"
-      >
-        <span className="unskew">Ver os óculos</span>
-      </Link>
+    <main className="flex min-h-[70svh] flex-col justify-center bg-ink px-5 pt-28 pb-20 sm:px-10">
+      <div className="mx-auto w-full max-w-[1100px]">
+        <h1 className="max-w-[16ch] font-display text-[clamp(2.25rem,7vw,5rem)] leading-[0.9] font-black tracking-tight text-balance uppercase text-paper">
+          {titulo}
+        </h1>
+
+        <p className="mt-8 max-w-[46ch] font-sans text-xl leading-snug text-smoke">
+          {texto}
+        </p>
+
+        <Link
+          href="/produtos"
+          className="carimbo skew-brand mt-10 inline-block bg-gold px-8 py-4 font-display text-xl font-black tracking-tight uppercase text-ink transition-colors hover:bg-gold-deep"
+        >
+          <span className="unskew">Ver os óculos</span>
+        </Link>
+      </div>
     </main>
   );
 }

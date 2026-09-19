@@ -1,7 +1,9 @@
-import Link from "next/link";
 import { exigirAdminNaPagina } from "@/lib/admin";
+import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { ListaProdutos } from "@/componentes/admin/ListaProdutos";
+import { Vazio } from "@/componentes/admin/Vazio";
+import { Aviso } from "@/componentes/admin/Aviso";
 import type { ProdutoComFotos } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,48 +30,38 @@ export default async function PaginaProdutosAdmin() {
     fotos: (p.fotos ?? []).sort((a, b) => a.ordem - b.ordem),
   }));
 
+  // esgotado e escondido são o que ele precisa saber antes de rolar a lista
+  const esgotados = produtos.filter((p) => p.estoque === 0).length;
+  const ocultos = produtos.filter((p) => !p.ativo).length;
+
+  const contagem = [
+    `${produtos.length} ${produtos.length === 1 ? "produto" : "produtos"}`,
+    esgotados > 0 ? `${esgotados} esgotado${esgotados > 1 ? "s" : ""}` : null,
+    ocultos > 0 ? `${ocultos} oculto${ocultos > 1 ? "s" : ""}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-black uppercase">Produtos</h1>
-          <p className="mt-1 font-sans text-white/50">
-            {produtos.length === 0
-              ? "Nenhum produto ainda"
-              : `${produtos.length} ${produtos.length === 1 ? "produto" : "produtos"}`}
-          </p>
-        </div>
-
-        <Link
-          href="/admin/produtos/novo"
-          className="skew-brand bg-hot px-6 py-4 font-display text-lg font-black uppercase text-white transition-colors hover:bg-hot-dark"
-        >
-          <span className="unskew">+ Novo óculos</span>
-        </Link>
-      </div>
+      <Cabecalho
+        titulo="Produtos"
+        contagem={produtos.length === 0 ? undefined : contagem}
+        acao={{ href: "/admin/produtos/novo", texto: "+ Novo óculos" }}
+      />
 
       {error && (
-        <p className="mb-6 rounded border border-hot/40 bg-hot/10 px-4 py-3 font-sans text-white">
-          Não consegui carregar os produtos. Recarregue a página.
+        <p role="alert" className="mb-6">
+          <Aviso>Não consegui carregar os produtos. Recarregue a página.</Aviso>
         </p>
       )}
 
       {produtos.length === 0 ? (
-        <div className="rounded border border-dashed border-white/20 px-6 py-14 text-center">
-          <p className="font-display text-xl font-bold uppercase text-white/70">
-            Sua loja está vazia
-          </p>
-          <p className="mx-auto mt-3 max-w-[38ch] font-sans text-white/50">
-            Cadastre o primeiro óculos. Assim que ele tiver foto e preço, já
-            aparece na loja pros clientes.
-          </p>
-          <Link
-            href="/admin/produtos/novo"
-            className="skew-brand mt-8 inline-block bg-hot px-8 py-4 font-display text-lg font-black uppercase text-white"
-          >
-            <span className="unskew">Cadastrar o primeiro</span>
-          </Link>
-        </div>
+        <Vazio
+          titulo="Sua loja está vazia"
+          texto="Cadastre o primeiro óculos. Assim que ele tiver foto e preço, já aparece na loja pros clientes."
+          acao={{ href: "/admin/produtos/novo", texto: "Cadastrar o primeiro" }}
+        />
       ) : (
         <ListaProdutos produtos={produtos} />
       )}

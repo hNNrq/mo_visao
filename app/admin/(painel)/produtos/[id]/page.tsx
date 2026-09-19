@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ApagarProduto } from "@/componentes/admin/ApagarProduto";
+import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { FormProduto } from "@/componentes/admin/FormProduto";
 import { GerenciadorFotos } from "@/componentes/admin/GerenciadorFotos";
+import { carimboOk } from "@/componentes/admin/campos";
 import { exigirAdminNaPagina } from "@/lib/admin";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import type { Produto, ProdutoFoto } from "@/lib/types";
@@ -39,33 +42,36 @@ export default async function PaginaEditarProduto({ params, searchParams }: Prop
     <div>
       <Link
         href="/admin/produtos"
-        className="font-sans text-white/50 underline underline-offset-4 hover:text-white"
+        className="mb-5 inline-block font-sans text-base tracking-[0.16em] uppercase text-smoke transition-colors hover:text-gold"
       >
         ← Voltar
       </Link>
 
-      <h1 className="mt-4 font-display text-3xl font-black uppercase">
-        {(produto as Produto).nome}
-      </h1>
+      <Cabecalho titulo={(produto as Produto).nome} />
 
       {salvo === "1" && (
-        <p className="mt-4 rounded border border-hot/40 bg-hot/10 px-4 py-3 font-sans text-white">
-          Salvo.
-          {semFoto && " Agora adicione as fotos — sem foto o óculos não vende."}
+        <p role="status" className="-mt-2 mb-8">
+          <span className={carimboOk}>
+            <span className="unskew">Salvo</span>
+          </span>
+          {semFoto && (
+            <span className="mt-3 block max-w-[46ch] font-sans text-lg leading-snug text-smoke">
+              Agora adicione as fotos — sem foto o óculos não vende.
+            </span>
+          )}
         </p>
       )}
 
-      <div className="mt-8">
-        <GerenciadorFotos
-          produtoId={id}
-          fotos={(fotos ?? []) as ProdutoFoto[]}
-        />
-      </div>
+      <GerenciadorFotos produtoId={id} fotos={(fotos ?? []) as ProdutoFoto[]} />
 
-      <hr className="my-10 border-white/10" />
-
-      <h2 className="mb-5 font-display text-2xl font-black uppercase">Dados</h2>
+      <h2 className="mt-12 mb-6 font-display text-2xl leading-none font-black tracking-tight uppercase text-paper">
+        Dados
+      </h2>
       <FormProduto produto={produto as Produto} />
+
+      <div className="mt-14 border-t border-paper/10 pt-7">
+        <ApagarProduto id={id} nome={(produto as Produto).nome} />
+      </div>
     </div>
   );
 }

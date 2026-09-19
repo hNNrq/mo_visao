@@ -1,5 +1,5 @@
 import { criarClientePublico } from "@/lib/supabase/publico";
-import type { Categoria, ProdutoComFotos } from "@/lib/types";
+import type { ProdutoComFotos } from "@/lib/types";
 
 /**
  * Leitura da vitrine.
@@ -47,6 +47,8 @@ export async function listarDestaques(limite = 6): Promise<ProdutoComFotos[]> {
     .select(SELECT_PRODUTO)
     .eq("ativo", true)
     .eq("destaque", true)
+    // A ordem é só a do dono. Havia aqui um desempate por categoria, que saiu
+    // junto com a separação por tipo em set/2026.
     .order("ordem", { ascending: true })
     .limit(limite);
 
@@ -57,8 +59,21 @@ export async function listarDestaques(limite = 6): Promise<ProdutoComFotos[]> {
   return ordenarFotos(data as unknown as ProdutoComFotos[]);
 }
 
+/**
+ * O filtro de `modelo` é `ilike` e não igualdade: o dono cadastra o nome
+ * completo ("Juliet X-Metal", "Penny anos 2000") e quem chega pelo atalho da
+ * home ou pelo Google busca só "juliet". Exigir o nome exato deixaria a
+ * página vazia sem ninguém entender por quê.
+ *
+ * O `%` sai da entrada porque, vindo da URL, viraria curinga: "%" sozinho
+ * casaria com o catálogo inteiro.
+ */
+function padraoModelo(modelo: string): string {
+  return `%${modelo.replace(/[%_]/g, "").trim()}%`;
+}
+
 export async function listarProdutos(filtros?: {
-  categoria?: Categoria;
+  modelo?: string;
   somenteDisponiveis?: boolean;
 }): Promise<ProdutoComFotos[]> {
   const supabase = criarClientePublico();
@@ -70,7 +85,7 @@ export async function listarProdutos(filtros?: {
     .eq("ativo", true)
     .order("ordem", { ascending: true });
 
-  if (filtros?.categoria) query = query.eq("categoria", filtros.categoria);
+  if (filtros?.modelo) query = query.ilike("modelo", padraoModelo(filtros.modelo));
   if (filtros?.somenteDisponiveis) query = query.gt("disponivel", 0);
 
   const { data, error } = await query;
@@ -80,6 +95,55 @@ export async function listarProdutos(filtros?: {
     return [];
   }
   return ordenarFotos(data as unknown as ProdutoComFotos[]);
+}
+
+/**
+ * Preços de vitrine pra hero: o mais barato disponível, e o mais barato de cada
+ * modelo pedido.
+ *
+ * Existe porque a hero promete 'vê o preço na hora' e não pode ser a única
+ * página da loja que não cumpre. Tudo aqui é dado do catálogo — modelo sem
+ * produto simplesmente não ganha preço, em vez de ganhar um número inventado.
+ *
+ * Uma consulta só, filtrando por disponível: preço de peça esgotada é promessa
+ * que a loja não pode cumprir.
+ */
+export async function precosDaVitrine(
+  modelos: readonly string[],
+): Promise<{ minimo: number | null; porModelo: Record<string, number> }> {
+  const vazio = { minimo: null, porModelo: {} };
+  const supabase = criarClientePublico();
+  if (!supabase) return vazio;
+
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("preco_centavos, modelo, nome")
+    .eq("ativo", true)
+    .gt("disponivel", 0);
+
+  if (error || !data) {
+    if (error) avisarFalha("preços", error);
+    return vazio;
+  }
+
+  const porModelo: Record<string, number> = {};
+  let minimo: number | null = null;
+
+  for (const linha of data) {
+    const preco = linha.preco_centavos as number;
+    if (minimo === null || preco < minimo) minimo = preco;
+
+    // casa pelo mesmo critério do filtro do catálogo, e também pelo nome:
+    // produto cadastrado como 'Juliet Ruby' sem preencher o campo modelo
+    // continua sendo um Juliet pra quem está olhando a hero.
+    const alvo = `${linha.modelo ?? ""} ${linha.nome ?? ""}`.toLowerCase();
+    for (const m of modelos) {
+      if (!alvo.includes(m.toLowerCase())) continue;
+      if (porModelo[m] === undefined || preco < porModelo[m]) porModelo[m] = preco;
+    }
+  }
+
+  return { minimo, porModelo };
 }
 
 export async function buscarProduto(slug: string): Promise<ProdutoComFotos | null> {

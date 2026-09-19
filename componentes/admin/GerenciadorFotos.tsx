@@ -6,6 +6,7 @@ import imageCompression from "browser-image-compression";
 import { excluirFoto, registrarFotos, reordenarFotos } from "@/app/admin/acoes";
 import { criarClienteBrowser } from "@/lib/supabase/client";
 import { urlFoto } from "@/lib/supabase/publico";
+import { Aviso } from "@/componentes/admin/Aviso";
 import type { ProdutoFoto } from "@/lib/types";
 
 /**
@@ -22,6 +23,10 @@ import type { ProdutoFoto } from "@/lib/types";
 
 const LARGURA_MAX = 1600;
 const TAMANHO_ALVO_MB = 0.6;
+
+/** Folha colada à mão não sai no esquadro, e três com o mesmo giro leem
+ *  como grade em vez de muro. Nenhum valor é 0deg. */
+const GIROS = ["-1.1deg", "0.9deg", "-0.6deg", "1.3deg"];
 
 type Status = { enviando: boolean; total: number; feitos: number; erro: string | null };
 
@@ -133,19 +138,27 @@ export function GerenciadorFotos({
 
   return (
     <section>
-      <h2 className="font-display text-2xl font-black uppercase">Fotos</h2>
-      <p className="mt-1 mb-4 font-sans text-white/50">
+      <h2 className="font-display text-2xl leading-none font-black tracking-tight uppercase text-paper">
+        Fotos
+      </h2>
+      <p className="mt-2 mb-5 font-sans text-lg leading-snug text-smoke">
         A primeira foto é a que aparece na loja. Use as setas pra mudar a ordem.
       </p>
 
-      {fotos.length > 0 && (
-        <ul className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {fotos.map((foto, i) => (
-            <li
-              key={foto.id}
-              className="overflow-hidden rounded border border-white/10 bg-steel"
-            >
-              <div className="relative aspect-square bg-paper">
+      {/* Aqui a foto é FOLHA de verdade: torta, com a folha de ontem deslocada
+          por baixo. É a única tela do painel com espaço pra isso — na lista o
+          giro e a sombra sólida quebrariam o ritmo da coluna. O vão é maior que
+          o normal porque o deslocamento de 7px/8px precisa de onde cair, e
+          nenhum giro é 0deg. */}
+      <ul className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3">
+        {fotos.map((foto, i) => (
+            <li key={foto.id}>
+              <div
+                className="folha relative aspect-square"
+                style={
+                  { "--giro": GIROS[i % GIROS.length] } as React.CSSProperties
+                }
+              >
                 <Image
                   src={urlFoto(foto.storage_path)}
                   alt=""
@@ -154,73 +167,111 @@ export function GerenciadorFotos({
                   className="object-contain p-2"
                 />
                 {i === 0 && (
-                  <span className="absolute top-2 left-2 rounded bg-hot px-2 py-1 font-display text-[11px] font-bold tracking-wide uppercase text-white">
-                    Capa
+                  <span className="carimbo skew-brand absolute top-2 left-2 bg-gold px-2.5 py-1 font-display text-xs font-black tracking-tight uppercase text-ink">
+                    <span className="unskew">Capa</span>
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-1 p-2">
-                <div className="flex gap-1">
-                  <button
-                    type="button"
+              <div className="mt-1.5 flex items-center justify-between gap-1.5">
+                <div className="flex gap-1.5">
+                  <BotaoSeta
+                    sentido="tras"
                     onClick={() => mover(i, -1)}
-                    disabled={i === 0}
-                    aria-label="Mover para trás"
-                    className="rounded border border-white/15 px-3 py-2 text-white/70 disabled:opacity-30"
-                  >
-                    ←
-                  </button>
-                  <button
-                    type="button"
+                    desabilitado={i === 0}
+                  />
+                  <BotaoSeta
+                    sentido="frente"
                     onClick={() => mover(i, 1)}
-                    disabled={i === fotos.length - 1}
-                    aria-label="Mover para frente"
-                    className="rounded border border-white/15 px-3 py-2 text-white/70 disabled:opacity-30"
-                  >
-                    →
-                  </button>
+                    desabilitado={i === fotos.length - 1}
+                  />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => apagar(foto)}
-                  className="px-2 py-2 font-sans text-sm text-white/40 hover:text-hot"
+                  className="px-2 py-2 font-sans text-sm tracking-[0.16em] uppercase text-smoke transition-colors hover:text-gold"
                 >
                   Apagar
                 </button>
               </div>
             </li>
           ))}
+
+          {/* A entrada é a PRÓXIMA vaga da grade, não uma faixa embaixo dela.
+              Em faixa larga, o objeto mais vazio da tela virava o maior — uma
+              chapa de aço de 840px sob uma folha de 230px. Como vaga, ela diz
+              "cabe mais uma aqui", que é o que ela é. */}
+          <li>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => aoEscolher(e.target.files)}
+              className="sr-only"
+              id="entrada-fotos"
+            />
+
+            <label
+              htmlFor="entrada-fotos"
+              className="flex aspect-square cursor-pointer items-center justify-center bg-steel p-4 text-center font-display text-base leading-tight font-black tracking-tight uppercase text-paper transition-colors hover:text-gold has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-gold sm:text-lg"
+            >
+              {status.enviando ? (
+                <span className="numeros">
+                  Enviando {status.feitos + 1} de {status.total}...
+                </span>
+              ) : fotos.length ? (
+                "+ Mais fotos"
+              ) : (
+                "+ Escolher fotos do celular"
+              )}
+            </label>
+          </li>
         </ul>
-      )}
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => aoEscolher(e.target.files)}
-        className="hidden"
-        id="entrada-fotos"
-      />
-
-      <label
-        htmlFor="entrada-fotos"
-        className="flex cursor-pointer items-center justify-center rounded border-2 border-dashed border-white/25 px-6 py-8 text-center font-display text-lg font-bold uppercase text-white/70 transition-colors hover:border-hot hover:text-white"
-      >
-        {status.enviando
-          ? `Enviando ${status.feitos + 1} de ${status.total}...`
-          : fotos.length
-            ? "+ Adicionar mais fotos"
-            : "+ Escolher fotos do celular"}
-      </label>
 
       {status.erro && (
-        <p role="alert" className="mt-3 font-sans text-sm text-hot">
-          {status.erro}
+        <p role="alert" className="mt-4">
+          <Aviso>{status.erro}</Aviso>
         </p>
       )}
+
     </section>
+  );
+}
+
+function BotaoSeta({
+  sentido,
+  onClick,
+  desabilitado,
+}: {
+  sentido: "tras" | "frente";
+  onClick: () => void;
+  desabilitado: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={desabilitado}
+      aria-label={sentido === "tras" ? "Mover para trás" : "Mover para frente"}
+      className="bg-paper/10 px-3 py-2.5 text-paper transition-colors hover:bg-paper/20 disabled:bg-paper/5 disabled:text-paper/25"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+        className={sentido === "frente" ? "rotate-180" : undefined}
+      >
+        <path d="M19 12H5" />
+        <path d="m11 6-6 6 6 6" />
+      </svg>
+    </button>
   );
 }

@@ -3,162 +3,146 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import {
-  ajustarNaLista,
-  alternarBooleano,
-  excluirProduto,
-} from "@/app/admin/acoes";
+import { Aviso } from "@/componentes/admin/Aviso";
+import { ajustarNaLista, alternarBooleano } from "@/app/admin/acoes";
 import { precoBRL } from "@/lib/format";
 import { urlFoto } from "@/lib/supabase/publico";
 import type { ProdutoComFotos } from "@/lib/types";
 
 /**
- * Lista de produtos do painel.
+ * O quadro de preços da loja.
  *
- * Cartão por produto, não tabela: ele mexe nisso pelo celular, e tabela com
- * várias colunas obriga a rolar pro lado. Preço e quantidade — o que muda toda
- * semana — se editam aqui mesmo, sem abrir outra tela.
+ * Uma coluna de nomes de um lado, a coluna de ouro dos preços do outro. Não é
+ * tabela — tabela de colunas obriga a rolar pro lado no celular, que é onde ele
+ * mexe nisso. E não é cartão: cartão gasta a tela inteira pra mostrar três
+ * produtos, quando o que ele quer é bater o olho em dez.
+ *
+ * Preço e quantidade — o que muda toda semana — se editam na própria linha. O
+ * resto (foto, descrição, apagar) mora na tela do produto, a um toque no nome.
  */
 export function ListaProdutos({ produtos }: { produtos: ProdutoComFotos[] }) {
   return (
-    <ul className="flex flex-col gap-4">
+    <ul>
       {produtos.map((p) => (
-        <CartaoProduto key={p.id} produto={p} />
+        <LinhaProduto key={p.id} produto={p} />
       ))}
     </ul>
   );
 }
 
-function CartaoProduto({ produto }: { produto: ProdutoComFotos }) {
+function LinhaProduto({ produto }: { produto: ProdutoComFotos }) {
   const [erro, setErro] = useState<string | null>(null);
-  const [confirmando, setConfirmando] = useState(false);
   const [pendente, iniciar] = useTransition();
 
   const foto = produto.fotos[0];
 
-  function rodar(fn: () => Promise<{ ok: boolean; erro?: string }>) {
+  const meta = [
+    produto.reservado > 0 ? `${produto.reservado} reservado` : null,
+    produto.ativo ? null : "oculto da loja",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  function alternar(coluna: "destaque" | "ativo", valor: boolean) {
     setErro(null);
     iniciar(async () => {
-      const r = await fn();
+      const r = await alternarBooleano(produto.id, coluna, valor);
       if (!r.ok) setErro(r.erro ?? "Não deu certo.");
     });
   }
 
   return (
     <li
-      className={`rounded border border-white/10 bg-steel p-4 transition-opacity ${
+      className={`border-b border-paper/10 py-3 transition-opacity last:border-b-0 sm:py-4 ${
         pendente ? "opacity-60" : ""
-      } ${produto.ativo ? "" : "border-dashed"}`}
+      }`}
     >
-      <div className="flex gap-4">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded bg-paper">
+      <div className="flex items-start gap-3.5 sm:gap-4">
+        {/* Papel, mas chapado: a folha de verdade — torta, com a folha de ontem
+            deslocada 7px/8px embaixo — mora na tela do produto. Aqui ela
+            quebraria o ritmo da coluna, e é o ritmo que faz a lista ser lista.
+            40px no celular pra sobrar altura de linha; a lista existe pra ele
+            bater o olho em dez produtos, não em três. */}
+        <div className="relative size-10 shrink-0 bg-paper sm:size-14">
           {foto ? (
             <Image
               src={urlFoto(foto.storage_path)}
               alt=""
               fill
-              sizes="80px"
+              sizes="56px"
               className="object-contain p-1"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-center font-sans text-[11px] leading-tight text-ink/40">
+            <span className="flex h-full items-center justify-center font-sans text-sm tracking-[0.2em] uppercase text-ink/45">
               sem
-              <br />
-              foto
-            </div>
+            </span>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate font-display text-xl font-bold uppercase">
+              <Link
+                href={`/admin/produtos/${produto.id}`}
+                // duas linhas em vez de reticências: com o carimbo de preço
+                // ocupando a direita, "Radar EV Prizm Road" chegava cortado em
+                // 390px, e nome cortado é produto que ele não reconhece
+                className={`line-clamp-2 font-display text-lg leading-tight font-black tracking-tight uppercase transition-colors hover:text-gold sm:text-2xl ${
+                  produto.ativo ? "text-paper" : "text-paper/55"
+                }`}
+              >
                 {produto.nome}
-              </h2>
-              <p className="font-sans text-sm text-white/45">
-                {produto.categoria === "corrida" ? "Corrida" : "Rua"}
-                {produto.reservado > 0 && ` · ${produto.reservado} reservado`}
-                {!produto.ativo && " · oculto da loja"}
+              </Link>
+              <p className="font-sans text-sm tracking-wide text-smoke">
+                {meta}
               </p>
             </div>
 
-            <Link
-              href={`/admin/produtos/${produto.id}`}
-              className="shrink-0 font-sans text-sm tracking-wide text-white/50 underline underline-offset-4 hover:text-white"
-            >
-              Editar
-            </Link>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            <CampoRapido
+            <CampoNaLinha
               rotulo="Preço"
-              valorInicial={(produto.preco_centavos / 100).toFixed(2).replace(".", ",")}
+              valorInicial={(produto.preco_centavos / 100)
+                .toFixed(2)
+                .replace(".", ",")}
               exibicao={precoBRL(produto.preco_centavos)}
               inputMode="decimal"
+              aparencia="carimbo"
               aoSalvar={(v) => ajustarNaLista(produto.id, "preco_centavos", v)}
               onErro={setErro}
             />
-            <CampoRapido
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <CampoNaLinha
               rotulo="Quantidade"
               valorInicial={String(produto.estoque)}
               exibicao={
                 produto.estoque === 0 ? "Esgotado" : `${produto.estoque} un.`
               }
               inputMode="numeric"
+              aparencia="campo"
               aoSalvar={(v) => ajustarNaLista(produto.id, "estoque", v)}
               onErro={setErro}
+            />
+
+            <Interruptor
+              ligado={produto.ativo}
+              texto="Na loja"
+              nomeCompleto="Mostrar na loja"
+              onChange={(v) => alternar("ativo", v)}
+            />
+            <Interruptor
+              ligado={produto.destaque}
+              texto="Em destaque"
+              nomeCompleto="Mostrar em destaque na página inicial"
+              onChange={(v) => alternar("destaque", v)}
             />
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
-        <Interruptor
-          ligado={produto.destaque}
-          rotulo="Na página inicial"
-          onChange={(v) => rodar(() => alternarBooleano(produto.id, "destaque", v))}
-        />
-        <Interruptor
-          ligado={produto.ativo}
-          rotulo="Visível na loja"
-          onChange={(v) => rodar(() => alternarBooleano(produto.id, "ativo", v))}
-        />
-
-        <div className="ml-auto">
-          {confirmando ? (
-            <span className="flex items-center gap-2">
-              <span className="font-sans text-sm text-white/70">Apagar mesmo?</span>
-              <button
-                type="button"
-                onClick={() => rodar(() => excluirProduto(produto.id))}
-                className="rounded bg-hot px-3 py-2 font-display text-sm font-bold uppercase text-white"
-              >
-                Apagar
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmando(false)}
-                className="rounded border border-white/20 px-3 py-2 font-display text-sm font-bold uppercase text-white/70"
-              >
-                Não
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmando(true)}
-              className="rounded px-3 py-2 font-sans text-sm text-white/40 hover:text-hot"
-            >
-              Apagar
-            </button>
-          )}
-        </div>
-      </div>
-
       {erro && (
-        <p role="alert" className="mt-3 font-sans text-sm text-hot">
-          {erro}
+        <p role="alert" className="mt-3">
+          <Aviso>{erro}</Aviso>
         </p>
       )}
     </li>
@@ -168,12 +152,17 @@ function CartaoProduto({ produto }: { produto: ProdutoComFotos }) {
 /**
  * Campo que vira input ao toque e salva ao sair. Sem botão "salvar" por campo:
  * um toque a menos em cada ajuste de preço.
+ *
+ * Em `carimbo` ele é o próprio bloco de ouro do preço — ele digita em cima do
+ * carimbo, não num formulário sobre ele. Por isso o cursor de texto vira preto
+ * ali: o cursor de ouro do resto do site sumiria contra o fundo dourado.
  */
-function CampoRapido({
+function CampoNaLinha({
   rotulo,
   valorInicial,
   exibicao,
   inputMode,
+  aparencia,
   aoSalvar,
   onErro,
 }: {
@@ -181,12 +170,26 @@ function CampoRapido({
   valorInicial: string;
   exibicao: string;
   inputMode: "decimal" | "numeric";
+  aparencia: "carimbo" | "campo";
   aoSalvar: (valor: string) => Promise<{ ok: boolean; erro?: string }>;
   onErro: (e: string | null) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState(valorInicial);
   const [salvando, setSalvando] = useState(false);
+
+  const carimbo = aparencia === "carimbo";
+
+  const bloco = carimbo
+    ? "carimbo skew-brand bg-gold text-ink"
+    : "skew-brand bg-paper/12 text-paper";
+
+  /**
+   * No celular o bloco encolhe: a coluna de preço é a tese da tela, mas o nome
+   * é como ele acha o produto — com o carimbo em corpo grande, "Radar EV Prizm
+   * Road" já chegava truncado em 390px.
+   */
+  const corpo = "font-display text-base font-black sm:text-lg";
 
   async function confirmar() {
     setEditando(false);
@@ -204,13 +207,11 @@ function CampoRapido({
 
   if (editando) {
     return (
-      <label className="flex flex-col gap-1">
-        <span className="font-display text-[11px] font-bold tracking-wider uppercase text-white/45">
-          {rotulo}
-        </span>
+      <span className={`${bloco} inline-block shrink-0 px-3 py-1.5 sm:py-2`}>
         <input
           autoFocus
           value={valor}
+          aria-label={rotulo}
           inputMode={inputMode}
           onChange={(e) => setValor(e.target.value)}
           onBlur={confirmar}
@@ -221,9 +222,11 @@ function CampoRapido({
               setEditando(false);
             }
           }}
-          className="w-28 rounded border border-hot bg-ink px-3 py-2 font-display text-lg text-white outline-none"
+          className={`numeros unskew ${corpo} bg-transparent outline-none ${
+            carimbo ? "w-24 text-right [caret-color:var(--color-ink)]" : "w-14"
+          }`}
         />
-      </label>
+      </span>
     );
   }
 
@@ -231,25 +234,36 @@ function CampoRapido({
     <button
       type="button"
       onClick={() => setEditando(true)}
-      className="flex flex-col gap-1 rounded border border-white/15 px-3 py-2 text-left transition-colors hover:border-white/40"
+      aria-label={`${rotulo}: ${exibicao}. Tocar pra mudar.`}
+      className={`${bloco} shrink-0 px-3 py-1.5 transition-opacity sm:py-2 ${
+        salvando ? "opacity-60" : ""
+      } ${carimbo ? "" : "hover:bg-paper/20"}`}
     >
-      <span className="font-display text-[11px] font-bold tracking-wider uppercase text-white/45">
-        {rotulo}
-      </span>
-      <span className="font-display text-lg text-white">
-        {salvando ? "salvando..." : exibicao}
+      <span className={`numeros unskew ${corpo}`}>
+        {salvando ? "..." : exibicao}
       </span>
     </button>
   );
 }
 
+/**
+ * Ligado é bloco de PAPEL com letra preta; parado é papel a 8% sobre o muro.
+ *
+ * Não é bloco de ouro, e isso foi uma correção: numa loja em ordem quase todo
+ * produto está na loja e vários estão em destaque, então dois carimbos de ouro
+ * por linha enchiam a tela de dourado e a coluna de preço — que é a tese dessa
+ * tela — sumia no meio. O ouro aqui é só do preço e da ação. O binário fica na
+ * segunda tinta: tem papel ou não tem.
+ */
 function Interruptor({
   ligado,
-  rotulo,
+  texto,
+  nomeCompleto,
   onChange,
 }: {
   ligado: boolean;
-  rotulo: string;
+  texto: string;
+  nomeCompleto: string;
   onChange: (v: boolean) => void;
 }) {
   return (
@@ -257,18 +271,15 @@ function Interruptor({
       type="button"
       role="switch"
       aria-checked={ligado}
+      aria-label={nomeCompleto}
       onClick={() => onChange(!ligado)}
-      className={`flex items-center gap-2 rounded border px-3 py-2 font-sans text-sm transition-colors ${
+      className={`skew-brand px-3 py-1.5 font-display text-sm font-black tracking-tight uppercase transition-colors sm:py-2 ${
         ligado
-          ? "border-hot/60 bg-hot/15 text-white"
-          : "border-white/15 text-white/45"
+          ? "bg-paper text-ink hover:bg-paper/85"
+          : "bg-paper/8 text-paper/55 hover:bg-paper/20"
       }`}
     >
-      <span
-        aria-hidden
-        className={`h-3 w-3 rounded-full ${ligado ? "bg-hot" : "bg-white/25"}`}
-      />
-      {rotulo}
+      <span className="unskew">{texto}</span>
     </button>
   );
 }

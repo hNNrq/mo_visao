@@ -22,35 +22,35 @@ export default function ErroDoPainel({
   reset: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-md px-5 py-16 text-center">
-      <h1 className="font-display text-2xl font-black uppercase">
+    <div className="mx-auto max-w-[480px] px-5 py-16 sm:px-8">
+      <h1 className="font-display text-3xl leading-none font-black tracking-tight uppercase text-paper">
         Não deu pra abrir essa tela
       </h1>
 
-      <p className="mt-4 font-sans text-white/60">
-        Alguma coisa falhou do lado do servidor. Tente de novo — se continuar,
-        me chame.
+      <p className="mt-5 max-w-[42ch] font-sans text-lg leading-snug text-smoke">
+        Alguma coisa falhou do lado do servidor. Tente de novo — se continuar, me
+        chame.
       </p>
 
-      <div className="mt-8 flex flex-col items-center gap-4">
+      <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
         <button
           type="button"
           onClick={reset}
-          className="skew-brand bg-hot px-8 py-4 font-display text-lg font-black uppercase text-white transition-colors hover:bg-hot-dark"
+          className="carimbo skew-brand bg-gold px-7 py-4 font-display text-lg font-black tracking-tight uppercase text-ink transition-colors hover:bg-gold-deep"
         >
           <span className="unskew">Tentar de novo</span>
         </button>
 
         <Link
           href="/admin/entrar"
-          className="font-sans text-white/50 underline underline-offset-4 hover:text-white"
+          className="font-sans text-base tracking-[0.16em] uppercase text-smoke transition-colors hover:text-gold"
         >
           Entrar de novo
         </Link>
       </div>
 
       {error.digest && (
-        <p className="mt-10 font-mono text-xs text-white/25">
+        <p className="numeros mt-12 font-sans text-sm tracking-[0.16em] uppercase text-smoke">
           código do erro: {error.digest}
         </p>
       )}

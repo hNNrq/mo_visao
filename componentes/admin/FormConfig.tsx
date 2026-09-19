@@ -2,14 +2,16 @@
 
 import { useActionState } from "react";
 import { salvarConfig, type Resultado } from "@/app/admin/acoes";
+import { Aviso } from "@/componentes/admin/Aviso";
+import {
+  botao,
+  campo,
+  carimboOk,
+  dica,
+  rotulo,
+} from "@/componentes/admin/campos";
 
 const inicial: Resultado = { ok: false };
-
-const rotulo =
-  "font-display text-sm font-bold tracking-wider uppercase text-white/60";
-const campo =
-  "rounded border border-white/15 bg-ink px-4 py-4 font-sans text-lg text-white outline-none focus:border-hot";
-const dica = "font-sans text-sm text-white/40";
 
 /**
  * Cada campo tem uma frase explicando o efeito na loja. O dono não sabe (nem
@@ -21,7 +23,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
   const v = (chave: string) => String(config[chave] ?? "");
 
   return (
-    <form action={acao} className="flex flex-col gap-6">
+    <form action={acao} className="flex max-w-[560px] flex-col gap-7">
       <label className="flex flex-col gap-2">
         <span className={rotulo}>WhatsApp</span>
         <input
@@ -29,7 +31,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           inputMode="numeric"
           defaultValue={v("whatsapp")}
           placeholder="5511999999999"
-          className={campo}
+          className={`${campo} numeros`}
         />
         <span className={dica}>
           Com código do país e DDD, só números. É o número que o cliente usa pra
@@ -68,7 +70,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           inputMode="numeric"
           defaultValue={v("desconto_pix_pct")}
           placeholder="5"
-          className={campo}
+          className={`${campo} numeros`}
         />
         <span className={dica}>
           No Pix a taxa é bem menor que no cartão, então o desconto sai quase de
@@ -91,25 +93,20 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
       </label>
 
       {estado.ok && !estado.erro && (
-        <p className="rounded border border-hot/40 bg-hot/10 px-4 py-3 font-sans text-white">
-          Ajustes salvos.
+        <p role="status">
+          <span className={carimboOk}>
+            <span className="unskew">Ajustes salvos</span>
+          </span>
         </p>
       )}
 
       {estado.erro && (
-        <p
-          role="alert"
-          className="rounded border border-hot/40 bg-hot/10 px-4 py-3 font-sans text-white"
-        >
-          {estado.erro}
+        <p role="alert">
+          <Aviso>{estado.erro}</Aviso>
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={enviando}
-        className="skew-brand bg-hot px-8 py-5 font-display text-xl font-black uppercase text-white transition-colors hover:bg-hot-dark disabled:opacity-60"
-      >
+      <button type="submit" disabled={enviando} className={`${botao} self-start`}>
         <span className="unskew">{enviando ? "Salvando..." : "Salvar ajustes"}</span>
       </button>
     </form>

@@ -1,4 +1,5 @@
 import { exigirAdminNaPagina } from "@/lib/admin";
+import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { FormConfig } from "@/componentes/admin/FormConfig";
 
@@ -13,11 +14,10 @@ export default async function PaginaConfig() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-black uppercase">Ajustes</h1>
-      <p className="mt-1 mb-7 font-sans text-white/50">
-        O que aparece na loja e como funciona a entrega.
-      </p>
-
+      <Cabecalho
+        titulo="Ajustes"
+        descricao="O que aparece na loja e como funciona a entrega."
+      />
       <FormConfig config={config as Record<string, unknown>} />
     </div>
   );

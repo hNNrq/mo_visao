@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-14T00:00:00.000Z",
+  "title": "Design System: Mó Visão",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Muro",
+        "canonical": "#000000",
+        "tonalRamp": ["#000000", "#0A0A0A", "#141414", "#1F1F1F", "#333333", "#595959", "#8C8C8C", "#D9D9D9"]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "#F2EDE3",
+        "tonalRamp": ["#2A2519", "#40392A", "#5C5442", "#7D7462", "#A39A87", "#C6BDA9", "#E0D9CB", "#F2EDE3"]
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Ouro de Desenho",
+        "canonical": "#D3A62C",
+        "tonalRamp": ["#241A00", "#3D2D05", "#5C440C", "#7C5C12", "#A47D16", "#D3A62C", "#E6C264", "#F4E0AA"]
+      },
+      "gold-deep": {
+        "role": "primary",
+        "displayName": "Ouro de Fundo",
+        "canonical": "#A47D16",
+        "tonalRamp": ["#1C1400", "#332503", "#4E3908", "#6B4E0E", "#A47D16", "#C79B29", "#DFBB63", "#F0DAA5"]
+      },
+      "fio": {
+        "role": "primary",
+        "displayName": "Fio",
+        "canonical": "rgb(211 166 44 / 0.9)",
+        "tonalRamp": ["rgb(211 166 44 / 0.15)", "rgb(211 166 44 / 0.25)", "rgb(211 166 44 / 0.35)", "rgb(211 166 44 / 0.45)", "rgb(211 166 44 / 0.58)", "rgb(211 166 44 / 0.7)", "rgb(211 166 44 / 0.9)", "rgb(211 166 44 / 1)"]
+      },
+      "fio-fraco": {
+        "role": "primary",
+        "displayName": "Fio Fraco",
+        "canonical": "rgb(211 166 44 / 0.58)",
+        "tonalRamp": ["rgb(211 166 44 / 0.1)", "rgb(211 166 44 / 0.18)", "rgb(211 166 44 / 0.28)", "rgb(211 166 44 / 0.4)", "rgb(211 166 44 / 0.58)", "rgb(211 166 44 / 0.72)", "rgb(211 166 44 / 0.86)", "rgb(211 166 44 / 1)"]
+      },
+      "regua": {
+        "role": "neutral",
+        "displayName": "Régua",
+        "canonical": "rgb(242 237 227 / 0.16)",
+        "tonalRamp": ["rgb(242 237 227 / 0.04)", "rgb(242 237 227 / 0.08)", "rgb(242 237 227 / 0.12)", "rgb(242 237 227 / 0.16)", "rgb(242 237 227 / 0.24)", "rgb(242 237 227 / 0.4)", "rgb(242 237 227 / 0.7)", "rgb(242 237 227 / 1)"]
+      },
+      "smoke": {
+        "role": "neutral",
+        "displayName": "Tinta Gasta",
+        "canonical": "#8C8577",
+        "tonalRamp": ["#1A1814", "#2E2B25", "#474338", "#635E50", "#8C8577", "#A9A296", "#C8C2B7", "#E5E1D9"]
+      },
+      "sob": {
+        "role": "neutral",
+        "displayName": "Folha de Ontem",
+        "canonical": "#5C5749",
+        "tonalRamp": ["#14120E", "#24211B", "#38342A", "#4B473B", "#5C5749", "#807A68", "#A9A292", "#D4CFC3"]
+      },
+      "steel": {
+        "role": "neutral",
+        "displayName": "Aço",
+        "canonical": "#14161A",
+        "tonalRamp": ["#050607", "#0A0B0D", "#14161A", "#1F2228", "#2E333B", "#4A515C", "#7B8492", "#C3C9D2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Título da prancha", "purpose": "Nome da loja no cartucho de topo da home. Archivo 900 caixa alta." },
+      "display-cartucho": { "displayName": "Cartucho", "purpose": "Nome da loja no bloco de título do rodapé." },
+      "headline": { "displayName": "Seção", "purpose": "Título de seção: Índice de modelos, Peças em estoque." },
+      "title": { "displayName": "Nome de modelo", "purpose": "A linha do índice; acende em ouro no hover." },
+      "title-peca": { "displayName": "Nome de peça", "purpose": "Nome do produto na célula de catálogo." },
+      "title-legenda": { "displayName": "Legenda", "purpose": "Nome da peça na tabela de legenda da prancha." },
+      "body": { "displayName": "Corpo", "purpose": "Frase de abertura e nota de campo, 42–46ch." },
+      "label": { "displayName": "Rótulo", "purpose": "Etiqueta miúda espacejada: rótulo de cartucho, 'a partir de', 'Esgotado'." },
+      "label-nav": { "displayName": "Rótulo de navegação", "purpose": "Links do header e meta do cartucho de topo." },
+      "dado": { "displayName": "Dado", "purpose": "Azeret Mono tabular: preço, parcela, valor de cartucho. Nunca frase." },
+      "chamada": { "displayName": "Chamada", "purpose": "Número dentro do balão, em unidade de usuário do SVG." },
+      "esticada": { "displayName": "Manchete esticada (transitório)", "purpose": "Páginas internas do mundo lambe-lambe, via Esticar." },
+      "painel-titulo": { "displayName": "Título de tela do painel", "purpose": "Escala fixa em rem, sem clamp e sem Esticar." }
+    },
+    "shadows": [
+      { "name": "sem-sombra-vitrine", "value": "none", "purpose": "A vitrine não tem sombra: profundidade sai de força de traço e opacidade de foco." },
+      { "name": "folha-de-baixo", "value": "7px 8px 0 0 var(--color-sob)", "purpose": "Mundo anterior: o cartaz que sobrou por baixo. Páginas internas e fotos do painel. Não usar na vitrine." },
+      { "name": "erro-de-registro", "value": "-2px 2px 0 0 var(--color-gold-deep)", "purpose": "Mundo anterior: segunda chapa fora de alinhamento, em bloco. Painel e páginas internas." },
+      { "name": "erro-de-registro-manchete", "value": "-0.024em 0.024em 0 var(--color-gold)", "purpose": "Mundo anterior: o mesmo erro em letra, medido em em. Só sobre o muro." }
+    ],
+    "motion": [
+      { "name": "acender-peca", "value": "opacity 200ms", "purpose": "Peça ativa a 100%, as demais a 35% e a linha de legenda a 40%." },
+      { "name": "acender-moldura", "value": "border-color 300ms", "purpose": "Hover da célula de catálogo: a moldura vai de régua a ouro." },
+      { "name": "aproximar-foto", "value": "transform 500ms", "purpose": "Hover da célula: a foto amplia 3% dentro da moldura." },
+      { "name": "colar", "value": "720ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Mundo anterior: a lâmina da colagem. Estado final é o padrão do elemento." }
+    ],
+    "breakpoints": [
+      { "name": "aperto", "value": "374px" },
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "folha", "value": "1600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Ação primária",
+      "kind": "button",
+      "refersTo": "botao-primario",
+      "description": "O único bloco de ouro da prancha, e o único elemento inclinado dela: o skew de -12° do PRODUCT.md sobrevive pinado aqui.",
+      "html": "<a class=\"ds-btn-primaria\" href=\"#\"><span class=\"ds-btn-unskew\">Ver o catálogo</span></a>",
+      "css": ".ds-btn-primaria { display: inline-block; background: var(--color-gold, #D3A62C); color: var(--color-ink, #000); padding: 16px 32px; font-family: var(--font-display, 'Archivo', 'Arial Narrow', sans-serif); font-size: 1.125rem; font-weight: 900; letter-spacing: -0.015em; text-transform: uppercase; text-decoration: none; border: none; border-radius: 0; transform: skewX(-12deg); transform-origin: left bottom; transition: background-color 200ms; } .ds-btn-unskew { display: inline-block; transform: skewX(12deg); } .ds-btn-primaria:hover { background: var(--color-gold-deep, #A47D16); } .ds-btn-primaria:focus-visible { outline: 3px solid var(--color-gold, #D3A62C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Chamada",
+      "kind": "chip",
+      "refersTo": "chamada",
+      "description": "O balão numerado da prancha. Redondo de propósito, em face de dado, e sempre link: é a assinatura deste mundo e precisa funcionar no polegar e no teclado.",
+      "html": "<a class=\"ds-chamada\" href=\"#peca-02\" aria-label=\"02 — Lente: ver na legenda\">02</a>",
+      "css": ".ds-chamada { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 1; height: 28px; border: 1px solid var(--color-fio, rgb(211 166 44 / 0.9)); border-radius: 9999px; background: var(--color-ink, #000); color: var(--color-gold, #D3A62C); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.875rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; text-decoration: none; transition: background-color 200ms, color 200ms; } .ds-chamada:hover, .ds-chamada:focus-visible { background: var(--color-gold, #D3A62C); color: var(--color-ink, #000); } .ds-chamada:focus-visible { outline: 3px solid var(--color-gold, #D3A62C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Célula de catálogo",
+      "kind": "card",
+      "refersTo": "celula-moldura",
+      "description": "Não é card: é célula de prancha. Moldura de detalhe com tiques de canto, foto em object-contain, nome à esquerda e cota à direita. Sem fundo próprio, sem sombra, sem canto.",
+      "html": "<a class=\"ds-celula\" href=\"#\"><div class=\"ds-celula-moldura\"><svg class=\"ds-celula-canto ds-canto-tl\" width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><path d=\"M0 0 L12 0 M0 0 L0 12\" stroke=\"var(--color-fio, rgb(211 166 44 / 0.9))\" stroke-width=\"1.5\" fill=\"none\"/></svg><svg class=\"ds-celula-canto ds-canto-br\" width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><path d=\"M0 0 L12 0 M0 0 L0 12\" stroke=\"var(--color-fio, rgb(211 166 44 / 0.9))\" stroke-width=\"1.5\" fill=\"none\"/></svg></div><div class=\"ds-celula-pe\"><div><h3 class=\"ds-celula-nome\">Juliet X-Metal</h3><p class=\"ds-celula-grau\">· últimas 2</p></div><p class=\"ds-celula-cota\"><span class=\"ds-celula-preco\">R$ 1.290,00</span><span class=\"ds-celula-parcela\">10x 129,00</span></p></div></a>",
+      "css": ".ds-celula { display: block; text-decoration: none; color: inherit; } .ds-celula-moldura { position: relative; aspect-ratio: 4 / 3; border: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); transition: border-color 300ms; } .ds-celula:hover .ds-celula-moldura { border-color: var(--color-gold, #D3A62C); } .ds-celula-canto { position: absolute; } .ds-canto-tl { top: 0; left: 0; } .ds-canto-br { right: 0; bottom: 0; transform: rotate(180deg); } .ds-celula-pe { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); } .ds-celula-nome { margin: 0; font-family: var(--font-display, 'Archivo', 'Arial Narrow', sans-serif); font-size: 1.5rem; font-weight: 900; line-height: 0.95; letter-spacing: -0.015em; text-transform: uppercase; color: var(--color-paper, #F2EDE3); transition: color 200ms; } .ds-celula:hover .ds-celula-nome { color: var(--color-gold, #D3A62C); } .ds-celula-grau { margin: 8px 0 0; font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-gold, #D3A62C); } .ds-celula-cota { flex-shrink: 0; margin: 0; padding-left: 16px; text-align: right; border-left: 1px solid var(--color-fio-fraco, rgb(211 166 44 / 0.58)); } .ds-celula-preco { display: block; font-family: var(--font-mono, ui-monospace, monospace); font-size: 1.125rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0; color: var(--color-gold, #D3A62C); } .ds-celula-parcela { display: block; margin-top: 6px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.75rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--color-smoke, #8C8577); }"
+    },
+    {
+      "name": "Peça esgotada",
+      "kind": "custom",
+      "refersTo": "carimbo-esgotado",
+      "description": "Estoque zero: foto apagada, hachura de 45° por cima e etiqueta escrita. O estado carrega rótulo e forma, nunca só cor.",
+      "html": "<div class=\"ds-esgotado\"><svg class=\"ds-esgotado-hachura\" aria-hidden=\"true\" preserveAspectRatio=\"none\"><defs><pattern id=\"ds-hachura\" width=\"9\" height=\"9\" patternTransform=\"rotate(45)\" patternUnits=\"userSpaceOnUse\"><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"9\" stroke=\"var(--color-regua, rgb(242 237 227 / 0.16))\" stroke-width=\"1\"/></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(#ds-hachura)\"/></svg><span class=\"ds-esgotado-etiqueta\">Esgotado</span></div>",
+      "css": ".ds-esgotado { position: relative; aspect-ratio: 4 / 3; border: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); } .ds-esgotado-hachura { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .ds-esgotado-etiqueta { position: absolute; bottom: 12px; left: 12px; border: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); background: var(--color-ink, #000); padding: 4px 8px; font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-smoke, #8C8577); }"
+    },
+    {
+      "name": "Linha do índice",
+      "kind": "custom",
+      "refersTo": "linha-indice",
+      "description": "O modelo como linha numerada: chamada, nome, frase e a cota de preço à direita. Fio de régua entre as linhas e nada mais.",
+      "html": "<a class=\"ds-linha\" href=\"#\"><span class=\"ds-linha-chamada\">01</span><span class=\"ds-linha-miolo\"><span class=\"ds-linha-nome\">Juliet</span><span class=\"ds-linha-texto\">A que todo mundo conhece de longe.</span></span><span class=\"ds-linha-cota\"><span class=\"ds-linha-rotulo\">a partir de</span><span class=\"ds-linha-preco\">R$ 1.290,00</span></span></a>",
+      "css": ".ds-linha { display: flex; align-items: center; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); text-decoration: none; color: inherit; } .ds-linha-chamada { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 1; height: 36px; flex-shrink: 0; border: 1px solid var(--color-fio, rgb(211 166 44 / 0.9)); border-radius: 9999px; color: var(--color-gold, #D3A62C); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.875rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; transition: background-color 200ms, color 200ms; } .ds-linha:hover .ds-linha-chamada { background: var(--color-gold, #D3A62C); color: var(--color-ink, #000); } .ds-linha-miolo { flex: 1; min-width: 0; } .ds-linha-nome { display: block; font-family: var(--font-display, 'Archivo', 'Arial Narrow', sans-serif); font-size: 2.5rem; font-weight: 900; line-height: 0.92; letter-spacing: -0.015em; text-transform: uppercase; color: var(--color-paper, #F2EDE3); transition: color 200ms; } .ds-linha:hover .ds-linha-nome { color: var(--color-gold, #D3A62C); } .ds-linha-texto { display: block; margin-top: 6px; max-width: 46ch; font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 1rem; line-height: 1.375; color: var(--color-smoke, #8C8577); } .ds-linha-cota { flex-shrink: 0; padding-left: 16px; text-align: right; border-left: 1px solid var(--color-fio-fraco, rgb(211 166 44 / 0.58)); } .ds-linha-rotulo { display: block; font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-smoke, #8C8577); } .ds-linha-preco { display: block; margin-top: 4px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 1.5rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0; color: var(--color-gold, #D3A62C); }"
+    },
+    {
+      "name": "Faixa de utilidade",
+      "kind": "nav",
+      "refersTo": "header-link",
+      "description": "A borda de cima da folha: opaca, sempre visível, fechada por um fio de régua. Sem logo, sem barra de promoção, ícones em SVG inline.",
+      "html": "<nav class=\"ds-faixa\"><ul class=\"ds-faixa-lista\"><li><a class=\"ds-faixa-link\" href=\"#\">Início</a></li><li><a class=\"ds-faixa-link\" href=\"#\">Catálogo</a></li></ul><ul class=\"ds-faixa-lista\"><li><a class=\"ds-faixa-link\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h2l1.6 9.2a2 2 0 0 0 2 1.8h6.9a2 2 0 0 0 2-1.6L20 8H6.4\"/><circle cx=\"10\" cy=\"20\" r=\"1.4\"/><circle cx=\"17\" cy=\"20\" r=\"1.4\"/></svg><span>Carrinho</span></a></li></ul></nav>",
+      "css": ".ds-faixa { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 10px 20px; background: var(--color-ink, #000); border-bottom: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); } .ds-faixa-lista { display: flex; align-items: center; gap: 32px; margin: 0; padding: 0; list-style: none; } .ds-faixa-link { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 0.875rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; color: rgb(242 237 227 / 0.7); transition: color 200ms; } .ds-faixa-link:hover { color: var(--color-gold, #D3A62C); } .ds-faixa-link:focus-visible { outline: 3px solid var(--color-gold, #D3A62C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo do cartucho",
+      "kind": "custom",
+      "refersTo": "campo-cartucho",
+      "description": "O bloco de título do pé da folha: rótulo miúdo em cima, valor embaixo, fio de régua entre os campos. Só entra o que é verdade.",
+      "html": "<dl class=\"ds-cartucho\"><div class=\"ds-cartucho-campo\"><dt class=\"ds-cartucho-rotulo\">Folha</dt><dd class=\"ds-cartucho-valor\">01 de 01</dd></div><div class=\"ds-cartucho-campo ds-cartucho-fio\"><dt class=\"ds-cartucho-rotulo\">Escala</dt><dd class=\"ds-cartucho-valor\">1:1</dd></div><div class=\"ds-cartucho-campo ds-cartucho-fio\"><dt class=\"ds-cartucho-rotulo\">Desenho</dt><dd class=\"ds-cartucho-valor\">Norman.dgt</dd></div></dl>",
+      "css": ".ds-cartucho { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; border-top: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); border-bottom: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); } .ds-cartucho-campo { padding: 16px 20px; } .ds-cartucho-fio { border-left: 1px solid var(--color-regua, rgb(242 237 227 / 0.16)); } .ds-cartucho-rotulo { font-family: var(--font-sans, 'Barlow Condensed', sans-serif); font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-smoke, #8C8577); } .ds-cartucho-valor { margin: 6px 0 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.875rem; font-variant-numeric: tabular-nums; letter-spacing: 0; color: rgb(242 237 227 / 0.8); }"
+    },
+    {
+      "name": "Painel — linha do quadro de preços",
+      "kind": "card",
+      "refersTo": "interruptor-ligado",
+      "description": "Mundo anterior, painel do dono: lista de linhas separadas por um fio, com a coluna de ouro dos preços e o interruptor em papel. Não usar na vitrine.",
+      "html": "<div class=\"ds-painel-linha\"><div class=\"ds-painel-topo\"><span class=\"ds-painel-nome\">Juliet X-Metal</span><span class=\"ds-painel-preco\">R$ 1.290,00</span></div><div class=\"ds-painel-pe\"><button class=\"ds-painel-interruptor ds-ligado\" role=\"switch\" aria-checked=\"true\">Na loja</button><button class=\"ds-painel-interruptor\" role=\"switch\" aria-checked=\"false\">Em destaque</button></div></div>",
+      "css": ".ds-painel-linha { padding: 12px 0; border-bottom: 1px solid rgb(242 237 227 / 0.1); } .ds-painel-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; } .ds-painel-nome { font-family: var(--font-display, 'Archivo', 'Arial Narrow', sans-serif); font-size: 1.125rem; font-weight: 900; line-height: 1.25; letter-spacing: -0.015em; text-transform: uppercase; color: var(--color-paper, #F2EDE3); } .ds-painel-preco { background: var(--color-gold, #D3A62C); color: var(--color-ink, #000); padding: 6px 12px; font-family: var(--font-display, 'Archivo', sans-serif); font-size: 1rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: 0; box-shadow: -2px 2px 0 0 var(--color-gold-deep, #A47D16); transform: skewX(-12deg); } .ds-painel-pe { display: flex; gap: 8px; margin-top: 12px; } .ds-painel-interruptor { border: none; border-radius: 0; padding: 6px 12px; font-family: var(--font-display, 'Archivo', sans-serif); font-size: 0.875rem; font-weight: 900; text-transform: uppercase; background: rgb(242 237 227 / 0.08); color: rgb(242 237 227 / 0.55); transform: skewX(-12deg); cursor: pointer; transition: background-color 200ms, color 200ms; } .ds-painel-interruptor.ds-ligado { background: var(--color-paper, #F2EDE3); color: var(--color-ink, #000); } .ds-painel-interruptor:hover { background: rgb(242 237 227 / 0.2); color: var(--color-paper, #F2EDE3); } .ds-painel-interruptor.ds-ligado:hover { background: rgb(242 237 227 / 0.85); color: var(--color-ink, #000); } .ds-painel-interruptor:focus-visible { outline: 3px solid var(--color-gold, #D3A62C); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Prancha — o catálogo de peças da Juliet",
+    "overview": "A vitrine não é loja: é uma folha de desenho técnico em negativo. Fundo preto, a peça desenhada a fio de ouro, chamadas numeradas ligadas por um fio até a legenda, cota medindo o que o cliente quer medir (o preço) e um cartucho de título fechando a folha no pé. A unidade de composição não é o card — é a linha numerada. O que desenha aqui é a LINHA; preenchimento, sombra e degradê não existem.\n\nA razão do mundo é o objeto: a Juliet é uma peça usinada, falada por quem a conhece em vocabulário de peça — armação, haste, borracha, ícone, parafuso. Catálogo de peças não é fantasia técnica em cima do óculos; é o jeito como esse objeto já é entendido. Por isso a vista explodida abre a página em vez de um hero de campanha, e por isso a home se chama PRANCHA 01.\n\nA forma é técnica, a palavra é rua. Essa tensão é a personalidade e é o antídoto do risco desta direção (sair fria): as legendas falam como o dono fala, nunca em prosa de engenharia. O público é molecada de 16 a 25 anos, em Android de entrada e rede móvel — e isso é material, não contexto: a prancha inteira são poucos KB de SVG em vez de uma foto de centenas, e a interação de assinatura funciona no polegar e no teclado porque é link, não hover.\n\nO sistema documenta TRÊS superfícies, e elas não se misturam: a vitrine (mundo da PRANCHA), as páginas internas da loja (ainda lambe-lambe, transitórias, próxima conversão) e o painel do dono (lambe-lambe em registro de trabalho, com contrato próprio).",
+    "keyCharacteristics": [
+      "Fio de ouro sobre preto: o que desenha é a linha, não o preenchimento",
+      "Vista explodida com eixo de montagem tracejado como primeira imagem da loja",
+      "Chamada numerada em balão redondo, e o número é link",
+      "Duas faces de texto que nunca se misturam com a terceira: monoespaçada só para DADO",
+      "Régua de 1px como única divisão — sem caixa, sem fundo próprio, sem canto arredondado",
+      "Ângulo reto e diagonal de 45°: nada torto, nada colado, zero skew (com uma exceção pinada)",
+      "Preço como COTA em coluna tabular, comparável descendo a página",
+      "Estoque como GRAU, com rótulo e forma além da cor"
+    ],
+    "rules": [
+      { "name": "A Regra da Linha", "body": "O que desenha é a LINHA. Na vitrine não existe preenchimento de peça, sombra, degradê, brilho nem vidro. Ouro em bloco tem dois usos e são os dois que o build tem: ação primária e chamada ativa. Qualquer terceiro bloco de ouro na vitrine é suspeito de ser badge de loja.", "section": "colors" },
+      { "name": "A Regra da Régua mais Fraca", "body": "regua (16%) nunca sobe pra força de fio (90%). A estrutura é mais apagada que a peça; quem inverte isso transforma a grade no assunto da folha.", "section": "colors" },
+      { "name": "A Regra do Ouro em Bloco", "body": "Sobre papel, ouro é bloco preenchido com letra preta, nunca letra (#D3A62C sobre #F2EDE3 dá 2.1:1). Sobre o muro preto vale o inverso, e é o caso da vitrine inteira: ouro em letra tem ~8.8:1 e pode.", "section": "colors" },
+      { "name": "A Regra do Texto sobre Ouro", "body": "Texto sobre ouro é sempre ink, nunca branco — branco sobre #D3A62C dá 2.3:1.", "section": "colors" },
+      { "name": "A Regra da Monoespaçada só pra Dado", "body": "Azeret Mono é número: chamada, cota, preço, parcela, quantidade e valor de cartucho. Nunca navegação, nunca rótulo de seção, nunca frase. Ela já esteve na nav e nos rótulos e a página lia como datasheet — monoespaçada como fantasia de 'técnico' é violação de piso de acabamento, não estilo.", "section": "typography" },
+      { "name": "A Regra dos Dois Registros", "body": "Archivo 900 caixa alta para nome; Barlow Condensed para frase e rótulo; Azeret Mono para número. Os três registros não se invadem.", "section": "typography" },
+      { "name": "A Regra da Coluna Tabular", "body": "Todo número que o olho compara descendo a página leva numeros (tabular-nums, entreletra 0). Com largura proporcional as colunas dançam de linha em linha e a coluna deixa de ser coluna.", "section": "typography" },
+      { "name": "A Regra da Face e do Corpo", "body": "Esticar é dono da face, o ponto de uso é dono do tamanho: toda chamada traz o seu text-[...] explícito. O componente emite font-weight junto de font-variation-settings, de propósito: uma queda de fonte custa o eixo de largura, não o peso.", "section": "typography" },
+      { "name": "A Regra Sem Rótulo Acima do Título", "body": "Nenhum título leva etiqueta pendurada em cima. O título aguenta sozinho.", "section": "typography" },
+      { "name": "A Regra da Medida Única (vitrine)", "body": "Uma unidade de célula de 390px a 1600px. Nenhum componente da loja ganha largura de contêiner própria.", "section": "layout" },
+      { "name": "A Regra da Medida de Trabalho (painel)", "body": "O painel roda em 900px e o formulário para em 560–640px. É a única regra que contraria a medida única, e existe porque a vitrine é pra olhar e o painel é pra trabalhar.", "section": "layout" },
+      { "name": "A Regra da Pena", "body": "Todo traço de SVG carrega vector-effect: non-scaling-stroke. Espessura de pena não muda porque a folha é maior.", "section": "elevation" },
+      { "name": "A Regra do Desenho sem Sombra", "body": "Na vitrine nenhuma superfície tem sombra, desfoque, brilho ou degradê. Onde a versão anterior usaria folha, esta usa régua e respiro.", "section": "elevation" },
+      { "name": "A Regra da Origem", "body": "Toda peça do desenho é definida em torno da origem (0,0), nunca a partir do canto. Com a origem no centro, translate(x, 200) já põe a peça no eixo e espelhar é scale(-1 1) sem correção.", "section": "shapes" },
+      { "name": "A Regra da Escala Única", "body": "Dentro de uma composição, uma escala só para todas as peças. Numa vista explodida a relação de tamanho entre as peças é a informação.", "section": "shapes" },
+      { "name": "A Regra do Esquadro", "body": "Na vitrine nada sai do esquadro: sem rotação, sem --giro, sem folha torta. Diagonal só a 45°, e só como hachura.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do desenhar com a LINHA: traco (1.25, fio) para a peça, traco-fraco (1, fio-fraco) para detalhe, eixo e fio de chamada.",
+      "Do pôr vector-effect: non-scaling-stroke em todo traço de SVG.",
+      "Do definir toda peça nova em torno da origem (0,0) e posicionar com translate; espelhar com scale(-1 1).",
+      "Do usar uma escala só para todas as peças de uma mesma composição.",
+      "Do fazer da chamada um link focável, com alvo de toque maior que o balão.",
+      "Do separar com um fio de regua de 1px e respiro — nunca com caixa.",
+      "Do usar numeros (tabular-nums) em todo preço, parcela e contagem, na face de dado.",
+      "Do tratar estoque como grau: 'últimas N' antes de 'esgotado', sempre com rótulo escrito e forma própria (hachura de 45°) além da cor.",
+      "Do manter a moldura de detalhe em volta da foto de produto, mesmo com recorte alfa, porque a próxima foto pode vir de fundo branco.",
+      "Do recompor o celular como segunda folha autoral, não como desktop refluído.",
+      "Do manter uma medida só na vitrine (max-w-[1600px], margem 20/40px) e a medida de trabalho no painel (900px, formulário em 560–640px).",
+      "Do manter as três faces auto-hospedadas por next/font/local.",
+      "Do desenhar ícone como SVG inline que herda currentColor."
+    ],
+    "donts": [
+      "Don't usar folha, carimbo, registro, muro ou colada na vitrine — são primitivas do mundo anterior, vivas só para o painel e as páginas internas.",
+      "Don't usar sombra, desfoque, degradê, brilho ou vidro em nenhuma superfície da vitrine.",
+      "Don't girar nada na vitrine (--giro, rotação livre): ângulo reto e diagonal de 45°, e só.",
+      "Don't espalhar o skew de -12° além do bloco de ação primária enquanto a tensão com o PRODUCT.md estiver aberta.",
+      "Don't usar a face monoespaçada em navegação, rótulo de seção ou frase: ela é DADO.",
+      "Don't escrever texto em ouro sobre papel (2.1:1) nem texto branco sobre ouro (2.3:1).",
+      "Don't dar a regua a mesma força do fio — estrutura não compete com peça.",
+      "Don't trazer de volta o vocabulário da categoria: carrossel de banner, barra de frete com emoji, badge de '-25%', preço riscado, selo de compra segura, grade de cards iguais, hero de campanha.",
+      "Don't pôr rótulo/etiqueta acima de um título.",
+      "Don't fechar a célula de catálogo em caixa com fundo próprio ou canto arredondado; o único raio do sistema é o balão de chamada.",
+      "Don't afirmar procedência em nome de peça, e não pôr no cartucho nada que não seja verdade.",
+      "Don't apontar linha de índice sem preço para uma página de catálogo vazia.",
+      "Don't carimbar de ouro, no painel, o que não é preço, ação primária, aba ligada, pedido pago, confirmação de salvo ou capa da foto — em especial nunca o botão que apaga.",
+      "Don't estender as páginas internas no vocabulário lambe-lambe: elas estão em transição, não em manutenção."
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FormProduto } from "@/componentes/admin/FormProduto";
+import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { exigirAdminNaPagina } from "@/lib/admin";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 
@@ -13,15 +14,15 @@ export default async function PaginaNovoProduto() {
     <div>
       <Link
         href="/admin/produtos"
-        className="font-sans text-white/50 underline underline-offset-4 hover:text-white"
+        className="mb-5 inline-block font-sans text-base tracking-[0.16em] uppercase text-smoke transition-colors hover:text-gold"
       >
         ← Voltar
       </Link>
 
-      <h1 className="mt-4 font-display text-3xl font-black uppercase">Novo óculos</h1>
-      <p className="mt-1 mb-7 font-sans text-white/50">
-        Preencha os dados e salve. As fotos você adiciona na tela seguinte.
-      </p>
+      <Cabecalho
+        titulo="Novo óculos"
+        descricao="Preencha os dados e salve. As fotos você adiciona na tela seguinte."
+      />
 
       <FormProduto />
     </div>
