@@ -63,18 +63,22 @@ const pe = localFont({
 });
 
 /**
- * A MÃO — a face de graffiti do sobrenome.
+ * A MÃO — a face de graffiti.
  *
- * Entra só em "VISÃO", a segunda linha da abertura. "MÓ" continua na Archivo:
- * a ideia do Henrique (set/2026) é o contraste entre uma face comum e uma de
- * rua, e o contraste só existe porque uma das duas é comum.
+ * ⚠️ **Hoje ela não entra em lugar nenhum.** Montava o "VISÃO" da abertura até
+ * set/2026, quando a Clash Display (`marca`, abaixo) tomou o nome da loja
+ * inteiro. O token `--font-graffiti` continua no `globals.css` e nenhum
+ * componente o usa. Ela fica registrada aqui porque a face pode voltar em peça
+ * de Instagram ou em página interna — e porque a ressalva abaixo precisa
+ * continuar visível pra quem for tentar isso.
  *
  * 🔴 **ESTA FONTE NÃO PODE IR PRO AR COMERCIALMENTE.** Vandalust Graffiti, do
  * Cikareotype Studio, é "free for personal use" — o autor proíbe uso comercial
- * sem licença paga (cikareotype.com/license). O dono desistiu do site em
- * set/2026 e a peça virou portfólio, e foi com esse uso que o Henrique decidiu
- * mantê-la. Se a loja voltar a vender, a licença tem que ser comprada ANTES —
- * ou a face volta pra Archivo. Está registrado em `app/fontes/LEIA-ME.md`.
+ * sem licença paga (cikareotype.com/license). Enquanto ela esteve no nome da
+ * loja, esse era o lugar mais exposto possível pra uma fonte com essa restrição;
+ * a troca pela Clash tirou a abertura de baixo do problema. Se a face voltar
+ * pra qualquer coisa que venda, a licença tem que ser comprada ANTES. Está
+ * registrado em `app/fontes/LEIA-ME.md`.
  *
  * ⚠️ **O arquivo fica NO REPOSITÓRIO, e isso não é descuido.** A Hard Zone, a
  * face de graffiti anterior, ficava no `.gitignore`: o localhost mostrava uma
@@ -93,6 +97,45 @@ const mao = localFont({
   display: "swap",
   // Sem fallback de graffiti possível: se ela não chegar, a linha cai na face de
   // display do site, que é a Archivo — feio, mas legível e com o Ã certo.
+  fallback: ["var(--font-cartaz)", "Arial Black", "sans-serif"],
+});
+
+/**
+ * A MARCA — a face do nome da loja na abertura.
+ *
+ * Clash Display 700, do Indian Type Foundry (Fontshare). Entrou em set/2026 a
+ * pedido do Henrique e tomou o lugar do par Archivo + Vandalust que montava o
+ * nome até então.
+ *
+ * ## Ela resolveu três problemas de uma vez
+ *
+ * 1. 🔴 **Tirou a única fonte de licença proibida de cima do nome da loja.** A
+ *    Vandalust é "free for personal use" e o nome da marca era o lugar mais
+ *    exposto em que ela aparecia. Ver a nota da `mao` acima: aquela ressalva
+ *    continua valendo pra onde a face ainda for usada, mas a abertura saiu de
+ *    baixo dela.
+ * 2. **Tem os acentos.** Ó, Ã, Á, À, Â, Ç, É, Ê, Í, Õ, Ú — todos desenhados. É o
+ *    oposto da Vandalust, que não tem glifo acentuado nenhum e obrigava o til do
+ *    Ã a ser pousado por CSS. Com ela "MÓ VISÃO" é texto, não montagem.
+ * 3. **Cabe numa linha.** O nome era empilhado em duas porque as duas palavras
+ *    estavam em faces diferentes e os glifos de graffiti pintavam fora da caixa
+ *    de avanço, derrubando a haste da V em cima do acento do Ó. Com uma face só,
+ *    o problema não existe.
+ *
+ * ⚠️ **O `.woff2` é AUTO-HOSPEDADO, como as outras quatro.** A Fontshare serve
+ * um `<link>` de CDN, e foi assim que o Henrique passou a fonte — mas fonte
+ * buscada na rede é exatamente o que já quebrou este site em silêncio
+ * (`next/font/google` falhando no build e emitindo só fallback de Arial, sem
+ * erro nenhum). O arquivo mora em `app/fontes/` e entra no repositório.
+ *
+ * Licença: ITF Free Font License — uso pessoal e COMERCIAL liberado. Registrado
+ * em `app/fontes/LEIA-ME.md`.
+ */
+const marca = localFont({
+  src: "./fontes/clash-display-700.woff2",
+  variable: "--font-marca-face",
+  display: "swap",
+  weight: "700",
   fallback: ["var(--font-cartaz)", "Arial Black", "sans-serif"],
 });
 
@@ -150,7 +193,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${cartaz.variable} ${pe.variable} ${dado.variable} ${mao.variable}`}
+      className={`${cartaz.variable} ${pe.variable} ${dado.variable} ${mao.variable} ${marca.variable}`}
     >
       <body>{children}</body>
     </html>

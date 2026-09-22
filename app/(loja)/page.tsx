@@ -61,59 +61,68 @@ export default async function Home() {
   return (
     <main className="pt-14">
       {/*
-        A ABERTURA — nome, peça e ação, numa coluna centralizada.
+        A ABERTURA — o trio de retratos sangrando, e o nome pequeno embaixo.
 
-        Substituiu a grade de duas colunas em set/2026. A de antes existia porque
-        a foto era EM PÉ: uma folha alta de um lado obrigava a empilhar título,
-        frase e ação do outro, e como a folha era mais alta que os três somados,
-        sobrava um vazio na coluna de texto que nenhuma distribuição resolvia bem.
+        ⚠️ **O padding lateral saiu da SEÇÃO e desceu pro bloco de texto.** O trio
+        sangra de borda a borda e não pode herdar `px` de ninguém: com margem dos
+        dois lados as três fotos viram cartões soltos no muro, que é o oposto do
+        que a composição pede. O que ainda precisa de medida — frase, carimbo e
+        cota — pega o padding por conta própria.
 
-        A peça nova é DEITADA e recortada, e isso muda a composição inteira: ela
-        não fica ao lado do nome, ela fica EM CIMA dele. Sem duas colunas, sem
-        alturas pra conciliar, sem vão. O desktop e o celular passam a ser a mesma
-        composição em escalas diferentes, que é o que uma coluna centralizada
-        entrega de graça.
-
-        ⚠️ O respiro de baixo é maior que o de cima porque a `Abertura` já carrega
-        as fagulhas até a própria borda: apertar embaixo faria o campo de pontos
-        encostar no Índice.
+        ⚠️ O respiro de baixo continua maior que o de cima porque a `Abertura`
+        leva as fagulhas até a própria borda: apertar embaixo faria o campo de
+        pontos encostar no Índice.
       */}
-      <section className="relative overflow-hidden px-5 pt-12 pb-20 sm:px-10 sm:pt-16 sm:pb-28">
+      <section className="relative overflow-hidden pb-20 sm:pb-28">
         <div className="mx-auto max-w-[1600px]">
           <Abertura />
 
-          <p className="mx-auto mt-10 max-w-[28ch] text-center font-sans text-xl leading-snug tracking-[0.02em] text-pretty text-paper/80 uppercase sm:mt-12 sm:text-2xl">
-            Não passe despercebido.
-          </p>
-
           {/*
-            Ação e cota centralizadas, e o preço DEBAIXO do botão em vez de ao
-            lado. Numa coluna simétrica o par lado a lado puxa o peso pra um dos
-            lados e desmancha o eixo que o resto da composição construiu.
-          */}
-          <div className="mt-9 flex flex-col items-center gap-6 sm:mt-10">
-            <Link
-              href="/produtos"
-              className="skew-brand inline-block bg-gold px-8 py-4 font-display text-lg font-black tracking-tight text-ink uppercase transition-colors hover:bg-gold-deep sm:px-10 sm:py-5 sm:text-xl"
-            >
-              <span className="unskew">Ver o catálogo</span>
-            </Link>
+            🔴 **`relative z-10` aqui não é enfeite: sem ele a frase e o carimbo
+            somem debaixo das fotos.**
 
-            {precos.minimo !== null && (
-              <p className="text-center">
-                <span className="block font-sans text-xs tracking-[0.2em] text-smoke uppercase">
-                  A loja começa em
-                </span>
-                <span className="numeros mt-2 block font-mono text-xl leading-none font-bold text-gold sm:text-2xl">
-                  {precoBRL(precos.minimo)}
-                  {parcelas && (
-                    <span className="ml-3 text-sm font-normal text-smoke">
-                      ou {parcelas.parcelas}x de {parcelas.valor}
-                    </span>
-                  )}
-                </span>
-              </p>
-            )}
+            O nome da `Abertura` sobe pra dentro da queima por margem negativa, e
+            margem negativa arrasta TUDO que vem depois junto — frase e ação
+            passam a ocupar os últimos pixels da caixa do trio. Lá dentro, o
+            envelope do trio é `relative` e este bloco era estático, e elemento
+            posicionado pinta por cima de elemento estático mesmo vindo ANTES no
+            documento. O texto continuava no DOM, com caixa, cor e tamanho
+            certos, e simplesmente não aparecia na tela.
+          */}
+          <div className="relative z-10">
+            <p className="mx-auto mt-10 max-w-[28ch] px-5 text-center font-sans text-xl leading-snug tracking-[0.02em] text-pretty text-paper/80 uppercase sm:mt-12 sm:px-10 sm:text-2xl">
+              Não passe despercebido.
+            </p>
+
+            {/*
+              Ação e cota centralizadas, e o preço DEBAIXO do botão em vez de ao
+              lado. Numa coluna simétrica o par lado a lado puxa o peso pra um dos
+              lados e desmancha o eixo que o resto da composição construiu.
+            */}
+            <div className="mt-9 flex flex-col items-center gap-6 sm:mt-10">
+              <Link
+                href="/produtos"
+                className="skew-brand inline-block bg-gold px-8 py-4 font-display text-lg font-black tracking-tight text-ink uppercase transition-colors hover:bg-gold-deep sm:px-10 sm:py-5 sm:text-xl"
+              >
+                <span className="unskew">Ver o catálogo</span>
+              </Link>
+
+              {precos.minimo !== null && (
+                <p className="text-center">
+                  <span className="block font-sans text-xs tracking-[0.2em] text-smoke uppercase">
+                    A loja começa em
+                  </span>
+                  <span className="numeros mt-2 block font-mono text-xl leading-none font-bold text-gold sm:text-2xl">
+                    {precoBRL(precos.minimo)}
+                    {parcelas && (
+                      <span className="ml-3 text-sm font-normal text-smoke">
+                        ou {parcelas.parcelas}x de {parcelas.valor}
+                      </span>
+                    )}
+                  </span>
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </section>

@@ -80,9 +80,18 @@ corrida e rua, e passou a puxar pra rua.
 
 ## Evidence on Hand
 
-- **Foto da hero:** `public/hero-juliet-original.png` — Juliet de armação preta e
-  lente espelhada dourada, de frente, sobre branco. Vira recorte com alfa em
-  `public/hero-juliet.png` (`npm run preparar-juliet`).
+- **Fotos da hero:** três retratos de banco de imagem (Pexels) em
+  `imagens-fonte/` — pessoas de preto usando óculos de armação metálica e lente
+  espelhada, já fotografadas sobre fundo preto. Viram `public/trio-esq.jpg`,
+  `trio-meio.jpg` e `trio-dir.jpg` por `npm run preparar-trio`.
+  - ⚠️ **Licença de Pexels cobre o direito da FOTO, não o da PESSOA.** Os três
+    rostos são identificáveis e não há model release. O Henrique foi avisado em
+    set/2026 e escolheu seguir — fica registrado como risco aceito, não como
+    ponto resolvido. Substituir por foto de cliente real com autorização escrita
+    é o caminho que fecha isso e ainda vira prova social.
+- **Foto de produto solta:** `public/hero-juliet-original.png` → recorte com alfa
+  em `public/hero-juliet.png` (`npm run preparar-juliet`). Era a hero até
+  set/2026; hoje **nenhum componente usa**.
 - **Peças de Instagram já publicadas:** `../conteudo/` (carrosséis e legendas).
 - **Referência visual dada pelo Henrique:** thugnine.com.br (streetwear BR), mais
   imagens de brand kit da Oakley em `../referencias/`.

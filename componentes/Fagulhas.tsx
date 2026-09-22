@@ -115,13 +115,43 @@ const PONTOS: Ponto[] = [
   { x: 86, y: 96, d: 2, b: 0.43, t: 15, a: 0.3 },
 ];
 
-export function Fagulhas() {
+/**
+ * Espalha o campo pela LARGURA inteira e o empurra pra METADE DE BAIXO.
+ *
+ * Existe por causa do trio de retratos: a distribuição escrita acima nasceu
+ * quando o miolo da hero era o nome e as margens eram muro vazio. Com três
+ * fotos ocupando a largura toda, "margem" deixou de ser muro — virou o rosto de
+ * quem está na ponta, e ponto de ouro sobre pele lê como sujeira na lente, não
+ * como retícula.
+ *
+ * O que sobrou de muro é a QUEIMA de baixo, que o `preparar-trio.js` fecha em
+ * `#000000` a partir de 70% da altura da foto. É pra lá que o campo vai.
+ *
+ * As duas contas preservam o trabalho à mão da lista: nenhum ponto é reposicionado
+ * um a um, só remapeado em bloco. Afinar um ponto continua sendo afinar a lista.
+ *
+ * - **x**: `[1,19]` e `[80,99]` abrem em leque até `[2,49]` e `[51,98]`. O fator
+ *   2.6 é o que leva a margem de 20% à metade da tela mantendo o espacejamento
+ *   relativo entre os pontos vizinhos.
+ * - **y**: `[0,100]` comprime pra `[46,100]`. Acima de 46% estão os rostos.
+ */
+function espalhado(p: Ponto): Ponto {
+  return {
+    ...p,
+    x: p.x < 50 ? p.x * 2.6 : 100 - (100 - p.x) * 2.6,
+    y: 46 + p.y * 0.54,
+  };
+}
+
+export function Fagulhas({ espalhar = false }: { espalhar?: boolean }) {
+  const pontos = espalhar ? PONTOS.map(espalhado) : PONTOS;
+
   return (
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden [--escala:0.5] sm:[--escala:0.75] lg:[--escala:1]"
     >
-      {PONTOS.map((p, i) => (
+      {pontos.map((p, i) => (
         <span
           key={i}
           className="fagulha"

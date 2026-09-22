@@ -7,8 +7,13 @@
 
    A VITRINE virou PRANCHA TÉCNICA em set/2026 (ver o bloco "A PRANCHA" mais
    abaixo): chamada numerada, cota e legenda, a fio de ouro sobre o preto. A
-   hero é a CHAPA — a foto do rei em retícula de meio-tom, com uma chamada
-   ligando a Juliet à linha de legenda (`componentes/Chapa.tsx`).
+   hero é a ABERTURA (`componentes/Abertura.tsx`) — três retratos sangrando de
+   borda a borda, com o nome da loja pequeno na faixa preta embaixo deles.
+
+   ⚠️ A hero já foi outras três coisas e nenhuma delas existe mais: vista
+   explodida em SVG (`Prancha.tsx`), a chapa do rei em retícula (`Chapa.tsx`) e
+   o recorte da Juliet pousado sobre o nome empilhado. Comentário deste arquivo
+   que cite qualquer uma delas está velho.
 
    As primitivas do mundo ANTERIOR — lambe-lambe, cartaz colado no poste:
    `folha`, `carimbo`, `registro`, `muro`, `colada`, `skew-brand` — continuam
@@ -36,10 +41,17 @@
 
   --font-display: var(--font-cartaz), "Arial Narrow", system-ui, sans-serif;
   --font-sans: var(--font-pe), system-ui, sans-serif;
-  /* o nome da marca usa a mesma face do resto do cartaz: uma gráfica de
-     esquina não tem duas fontes de manchete */
-  --font-marca: var(--font-cartaz), "Arial Narrow", system-ui, sans-serif;
-  /* a face de graffiti: SÓ a segunda linha da abertura. Ver app/layout.tsx. */
+  /* O NOME DA LOJA na abertura, e só ele: Clash Display 700.
+     Ela é a exceção à regra de "uma gráfica de esquina não tem duas fontes de
+     manchete" — manchete de seção continua na `--font-display`. O que justifica
+     a exceção é que aqui não é manchete, é a MARCA: uma palavra só, num lugar
+     só, e é o único texto da loja que precisa ler como logotipo. Ver
+     `app/layout.tsx`. */
+  --font-marca: var(--font-marca-face), var(--font-cartaz), "Arial Narrow",
+    system-ui, sans-serif;
+  /* ⚠️ a face de graffiti — ÓRFÃ desde set/2026, quando a Clash tomou o nome da
+     loja. Nenhum componente usa. Licença proíbe uso comercial: ver
+     app/fontes/LEIA-ME.md antes de reintroduzir. */
   --font-graffiti: var(--font-mao), var(--font-cartaz), "Arial Black", sans-serif;
   /* a face do DADO — chamada, cota, preço, quantidade. Ver app/layout.tsx. */
   --font-mono: var(--font-dado), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -408,7 +420,13 @@ body {
 }
 
 /* ==========================================================
-   O TIL DO Ã — posicionado à mão, e não tem jeito melhor.
+   O TIL DO Ã — posicionado à mão.
+
+   ⚠️ **ÓRFÃO desde set/2026.** Ele existia pro "VISÃO" em Vandalust; a Clash
+   Display tem Ã desenhado e o nome da loja voltou a ser texto comum. Fica aqui
+   porque a Vandalust pode voltar em peça interna — e porque a explicação abaixo
+   é o que impede alguém de tentar o Ã direto na face e achar que "só não
+   funcionou".
 
    A Vandalust tem 125 glifos e nenhum latino acentuado: não existe Ã nela. O
    Chrome decompõe o Ã em A + U+0303 e encontra o til na própria face, mas o

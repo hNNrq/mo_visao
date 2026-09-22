@@ -12,7 +12,8 @@
     "testar:concorrencia": "node scripts/testar-concorrencia.mjs",
     "testar:painel": "node scripts/testar-painel.mjs",
     "local:semear": "node scripts/semear-local.mjs",
-    "demo": "node scripts/demo-produtos.mjs"
+    "demo": "node scripts/demo-produtos.mjs",
+    "preparar-trio": "node scripts/preparar-trio.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

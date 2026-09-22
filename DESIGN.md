@@ -406,20 +406,43 @@ com "Arial Narrow" e `system-ui` de reserva
 **Body Font:** Barlow Condensed (400 e 500 — e só), com `system-ui` de reserva
 **Data Font:** Azeret Mono variável (400–700 num arquivo só, 26 KB), com
 `ui-monospace` de reserva
+**Brand Font:** Clash Display 700 (ITF Free Font License, 14 KB) — **só o nome
+da loja na abertura** (`--font-marca`), com a Archivo de reserva
 
-🔴 **As três faces são AUTO-HOSPEDADAS** (`next/font/local`, `.woff2` em
-`app/fontes/`, subconjunto `latin`), e isso não é preferência. Com
-`next/font/google` o build busca a fonte na rede, e quando essa busca falha o
-Next **não estoura**: emite um `@font-face` só de fallback (`src: local(Arial)`)
-e segue. Aconteceu em set/2026 — os chunks saíram com zero `url()`, o site
-inteiro renderizou em Arial peso 400, a `Esticar` mexeu num eixo que não existia
-e a manchete virou letra espalhada. Nenhum erro, nenhum aviso, nenhum teste
-quebrado. Com o `.woff2` no repositório o build não tem rede pra falhar.
+🔴 **As quatro faces são AUTO-HOSPEDADAS** (`next/font/local`, `.woff2` em
+`app/fontes/`), e isso não é preferência. Com `next/font/google` o build busca a
+fonte na rede, e quando essa busca falha o Next **não estoura**: emite um
+`@font-face` só de fallback (`src: local(Arial)`) e segue. Aconteceu em
+set/2026 — os chunks saíram com zero `url()`, o site inteiro renderizou em Arial
+peso 400, a `Esticar` mexeu num eixo que não existia e a manchete virou letra
+espalhada. Nenhum erro, nenhum aviso, nenhum teste quebrado. Com o `.woff2` no
+repositório o build não tem rede pra falhar.
+
+⚠️ **A regra vale igual pra `<link>` de CDN.** A Clash Display chegou como um
+`<link>` da Fontshare e foi baixada antes de entrar. Fonte nova segue sempre o
+mesmo caminho: baixar o `.woff2`, salvar em `app/fontes/`, registrar com
+`localFont` e anotar a licença em `app/fontes/LEIA-ME.md`.
+
+**Duas fontes de manchete, e a exceção é nominal.** A regra da casa é que uma
+gráfica de esquina não tem duas faces de manchete, e manchete de seção continua
+toda na Archivo. A Clash entra num lugar só: **o nome da loja**. Ali não é
+manchete, é marca — uma palavra, um lugar, e é o único texto do site que precisa
+ler como logotipo. Ela também é o que devolveu o nome pra uma linha de texto
+comum: tem Ó e Ã desenhados, e por isso acabou com o par Archivo + Vandalust, com
+o til pousado por CSS e com o par `aria-hidden`/`sr-only` que consertava o nome
+pro leitor de tela.
+
+🔴 **A Vandalust (`--font-graffiti`) está ÓRFÃ e é de licença proibida.** "Free
+for personal use", sem uso comercial sem licença paga. Enquanto montava o "VISÃO"
+do nome, era o lugar mais exposto possível pra uma face com essa restrição. Ver
+`app/fontes/LEIA-ME.md` antes de reintroduzir em qualquer lugar que venda.
 
 **Character:** Archivo 900 em caixa alta é letreiro de folha: bloco sólido,
 altura de maiúscula constante. Barlow Condensed é a nota de margem — lisa,
 estreita, legível em corpo pequeno num aparelho de entrada. Azeret Mono é a
-caneta do desenhista: quadrada, tabular, feita pra número ficar em coluna.
+caneta do desenhista: quadrada, tabular, feita pra número ficar em coluna. Clash
+Display 700 é o letreiro pintado da fachada — larga, de canto seco, feita pra ser
+lida de longe e em caixa alta.
 
 ### Hierarchy
 - **Display / Título da prancha** (Archivo 900, `clamp(2.75rem, 10vw, 7rem)`,
@@ -647,33 +670,72 @@ Nem o nome da loja nem os modelos entram no header: o nome vive no cartucho, os
 modelos são o ÍNDICE.
 
 ### A Abertura (componente de assinatura)
-A hero: o nome da loja empilhado numa coluna central e a **peça pousada no meio
-da pilha**, com as letras passando por trás dela. Uma chamada só. A peça é
-`public/hero-juliet.png` — Juliet de armação preta e lente espelhada dourada,
-recortada com canal alfa de verdade (`npm run preparar-juliet`, a partir de
-`public/hero-juliet-original.png`).
+A hero: **três retratos lado a lado, sangrando de borda a borda**, e o nome da
+loja pequeno na faixa preta embaixo deles. Virou em set/2026 e substituiu a
+composição do nome empilhado com a Juliet recortada por cima.
 
-- **A peça é RECORTE e não passa por retícula.** Ela pousa no preto sem folha,
-  sem moldura e sem emenda, que é o que o contrato de direção pedia desde o
-  começo: a foto do produto flutua na prancha sem caixa. Reticular devolveria o
-  retângulo de papel que o recorte resolve, e apagaria o espelho da lente, que é
-  o que faz a peça acender.
-- 🔴 **A sobreposição é ASSIMÉTRICA de propósito.** A peça morde muito mais "MÓ"
-  do que "VISÃO": caixa-alta se reconhece pela metade de CIMA, então a peça sobe
-  sobre a linha de baixo e sobra na de cima. E o til do Ã e o acento do Ó moram
-  ACIMA da caixa da linha — cobrir o topo de "VISÃO" come o til e o nome da loja
-  sai escrito errado. O teto da mordida é a leitura do nome.
-- **A peça entra no FLUXO, entre as duas linhas, e sobe por margem negativa** —
-  nunca `position: absolute`. Absoluto tiraria a peça do fluxo, a altura do bloco
-  passaria a ser só a das duas linhas de texto, e a haste vazaria por cima do
-  parágrafo abaixo. As duas margens são medidas em `em` do próprio `h1`, então a
-  sobreposição acompanha o `clamp` da manchete em vez de descolar dela no meio do
-  caminho.
-- 🔴 **A abertura não tem link.** A chamada numerada que ficava debaixo do nome
-  saiu em set/2026: ela nomeava um modelo só no quadro que abre a loja, e o
-  Índice logo abaixo já lista os três com preço. A ação primária do primeiro
-  quadro é o carimbo "Ver o catálogo", e ele não divide o quadro com ninguém.
-  A chamada numerada continua viva — no Índice, numerando os modelos.
+**Por que gente, e não o produto.** A dúvida que trava quem compra óculos pela
+internet é uma só: *como isso fica na minha cara*. Foto de produto solto não
+responde, por melhor que seja o recorte — e sem referência de tamanho o objeto lê
+como ícone, não como peça. Três rostos respondem antes de a pergunta ser feita e
+ainda dão escala ao produto de graça. É também o padrão da categoria: marca de
+rua abre com gente usando a peça, e quando abre com o objeto (Corteiz, Stüssy) é
+porque quem chega já conhece a marca. Esta loja ainda não tem esse luxo.
+
+As peças são `public/trio-esq.jpg`, `trio-meio.jpg` e `trio-dir.jpg`, saídas de
+`npm run preparar-trio` a partir de `imagens-fonte/`.
+
+- 🔴 **O alinhamento é do ARQUIVO, nunca do CSS.** O preparador nivela a linha
+  dos olhos das três em 34% da altura e normaliza o óculos em 40% da largura. São
+  as duas medidas que fazem uma fileira de retratos ler como uma peça só: cabeça
+  fora do eixo denuncia a montagem antes de qualquer tratamento de cor, e o mesmo
+  óculos aparecendo em tamanhos diferentes faz parecer três lojas. Por isso as
+  três entram com a mesma classe, o mesmo `sizes` e o mesmo `object-position` — e
+  por isso **trocar foto é mexer no script, não no componente**.
+- 🔴 **Não existe véu, scrim nem degradê de CSS por cima da foto.** O que abre o
+  lugar do nome é a QUEIMA que o preparador já imprimiu em cada arquivo: de 42%
+  pra baixo a foto apaga, e de 70% pra baixo é `#000000` chapado. Escurecer foto
+  com camada semitransparente por cima é iluminação — aqui quem escurece a foto é
+  a própria foto, na chapa, antes de chegar no navegador.
+- **A queima também apaga marca de terceiro.** A peça da direita tem logo HUGO
+  BOSS no peito e a do meio tem letra na moletom. `QUEIMA_INICIO` é medido pra
+  engolir os dois: mexer nele é reabrir os dois logos.
+- **O nome é UMA LINHA de texto comum, em Clash Display 700, caixa alta.** Foi
+  empilhado em duas até set/2026, porque as duas palavras estavam em faces
+  diferentes (a Vandalust não tem Ó) e os glifos de graffiti pintam fora da caixa
+  de avanço, derrubando a haste da V sobre o acento do Ó. A Clash tem os dois
+  acentos desenhados e acabou com a divisão, com o til pousado por CSS e com o
+  par `aria-hidden`/`sr-only`.
+  - 🔴 **Esse par não pode voltar por hábito.** Ele existia pra consertar o nome
+    pro leitor de tela, que recebia "VISAO" da montagem à mão. Agora o texto no
+    DOM é "Mó Visão" e chega certo — um `aria-hidden` no `h1` hoje esconderia o
+    nome da loja de quem ouve a página.
+  - **A caixa alta é do `uppercase`, não do texto.** Conteúdo em caixa mista é o
+    que leitor de tela e busca leem bem.
+- **O nome não é mais a manchete — é assinatura.** Quem puxa o olho é o trio.
+  Continua sendo o `<h1>` da home (é o nome da loja na página raiz, que é o que a
+  busca espera ali), e corpo pequeno não muda o que o documento declara.
+- ⚠️ **A margem negativa que sobe o nome mora no `h1`, não na `div`.** `em` é
+  sempre o corpo do elemento que a declara: na `div` ela valeria 16px fixos e a
+  subida descolaria do nome assim que o `clamp` mexesse no corpo.
+- 🔴 **O que vem DEPOIS da Abertura precisa de `relative z-10`.** A margem
+  negativa do nome arrasta frase e carimbo pra dentro da caixa do trio. Lá dentro
+  o envelope do trio é `relative`, e elemento posicionado pinta por cima de
+  elemento estático mesmo vindo antes no documento — sem o `z-10` o texto fica no
+  DOM, com caixa, cor e tamanho certos, e simplesmente não aparece na tela.
+- **No celular só entra a do meio.** Três colunas em 390px dão 130px por foto, e
+  retrato vertical cortado a 130px vira tira de ombro: some o rosto, que é a única
+  coisa que a peça tem pra dizer. O trio é composição de tela larga.
+- **O corte de altura come por BAIXO** (`object-top`). Embaixo é queima, que é
+  preto chapado e não custa nada perder; no meio estão os rostos.
+- 🔴 **A abertura não tem link.** A ação primária do primeiro quadro é o carimbo
+  "Ver o catálogo", e ele não divide o quadro com ninguém. A chamada numerada
+  continua viva no Índice, numerando os modelos.
+
+**A composição anterior** (nome empilhado, Juliet recortada pousada entre as duas
+linhas, mordida assimétrica pra não comer o til do Ã) saiu inteira. O recorte
+`public/hero-juliet.png` e o `npm run preparar-juliet` seguem no repo, mas
+**nenhum componente os usa**.
 
 ### O Índice (componente de assinatura)
 Titulado **"Os mais falados"** na página — a estrutura é de índice, a etiqueta é
