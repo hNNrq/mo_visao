@@ -723,9 +723,18 @@ As peças são `public/trio-esq.jpg`, `trio-meio.jpg` e `trio-dir.jpg`, saídas 
   o envelope do trio é `relative`, e elemento posicionado pinta por cima de
   elemento estático mesmo vindo antes no documento — sem o `z-10` o texto fica no
   DOM, com caixa, cor e tamanho certos, e simplesmente não aparece na tela.
-- **No celular só entra a do meio.** Três colunas em 390px dão 130px por foto, e
-  retrato vertical cortado a 130px vira tira de ombro: some o rosto, que é a única
-  coisa que a peça tem pra dizer. O trio é composição de tela larga.
+- 🔴 **No celular a faixa não pode ser mais alta do que a tela é larga**
+  (`h-[min(100vw,22rem)]`). O corte lateral do `object-cover` não sai da largura
+  da coluna sozinha, sai da RAZÃO entre largura e altura: quanto mais alta a
+  faixa, mais o navegador amplia a foto e mais largura ele joga fora. Com a foto
+  em 1200×1800 sobra `coluna × 1800 / altura`, e a cabeça ocupa uns 540 dos
+  1200 — `altura ≤ largura da tela` é o que mantém os três rostos inteiros. Foi
+  por ignorar essa conta que as laterais ficaram escondidas até set/2026
+  (`hidden sm:block`, com a faixa em `clamp(24rem,62vh,34rem)`): num celular alto
+  o `62vh` levava a faixa a ~540px e aí as três realmente viravam tiras de ombro.
+  **Altura em `vh` no celular reabre o problema** — ela não sabe nada sobre a
+  largura da coluna, que é a medida que decide o corte. No `sm:` pra cima o `vh`
+  continua, porque lá a coluna é larga o bastante pra não haver corte.
 - **O corte de altura come por BAIXO** (`object-top`). Embaixo é queima, que é
   preto chapado e não custa nada perder; no meio estão os rostos.
 - 🔴 **A abertura não tem link.** A ação primária do primeiro quadro é o carimbo

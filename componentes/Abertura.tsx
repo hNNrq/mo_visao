@@ -36,13 +36,30 @@ import { Fagulhas } from "@/componentes/Fagulhas";
  * a mesma classe, o mesmo `sizes` e o mesmo `object-position` — e por isso trocar
  * uma foto é mexer no script, nunca aqui.
  *
- * ## No celular só entra a do meio
+ * ## No celular entram as três, e quem paga a conta é a ALTURA
  *
- * Três colunas em 390px dão 130px por foto, e um retrato vertical cortado a
- * 130px vira uma tira de ombro: some o rosto, que é a única coisa que a peça
- * tem pra dizer. A do meio é a frontal e a que encara a câmera, então é ela que
- * fica. O trio é composição de tela larga; no celular a mesma ideia cabe numa
- * pessoa só.
+ * ⚠️ Até set/2026 as laterais sumiam no celular (`hidden sm:block`), com o
+ * argumento de que 130px de largura por foto viram uma tira de ombro. O
+ * argumento estava meio certo: 130px de largura *com a altura de antes* viram.
+ * O corte lateral do `object-cover` não é função da largura da coluna sozinha —
+ * é da RAZÃO entre as duas. Quanto mais alta a faixa, mais o navegador tem que
+ * ampliar a foto pra preencher, e mais largura ele joga fora.
+ *
+ * A conta, com a foto em 1200×1800: a coluna mede `100vw/3` e o que sobra da
+ * foto é `coluna × 1800 / altura`. A cabeça ocupa uns 540 dos 1200, centrada —
+ * então enquanto sobrar ~600px de foto o rosto entra inteiro. Resolvendo:
+ * **a faixa não pode ser mais alta do que a tela é larga.** Daí o
+ * `min(100vw,22rem)`: em 320px sobram 596px de foto, em 390px sobram 665px.
+ *
+ * 🔴 **O `vh` saiu do celular de propósito.** O que havia antes era
+ * `clamp(24rem,62vh,34rem)`, e num celular alto o `62vh` levava a faixa a
+ * ~540px — mais alta do que a tela é larga, que é exatamente o caso em que as
+ * três viram tiras. Altura amarrada na ALTURA da tela não sabe nada sobre a
+ * largura da coluna, que é a medida que decide o corte. No `sm:` pra cima o
+ * `vh` continua, porque lá a coluna é larga o bastante pra não haver corte.
+ *
+ * O que o corte come é fundo preto, não foto: o preparador já centrou o óculos
+ * na largura dos três arquivos, então apertar as bordas é apertar muro.
  *
  * ## O nome encolheu, e o que ele deixou de ser
  *
@@ -77,21 +94,21 @@ import { Fagulhas } from "@/componentes/Fagulhas";
 const LARGURA = 1200;
 const ALTURA = 1800;
 
-type Retrato = { arquivo: string; alt: string; classe?: string };
+type Retrato = { arquivo: string; alt: string };
 
 /**
- * A ordem é a da tela, e a `meio` é a que sobra no celular.
+ * A ordem é a da tela, e as três aparecem em qualquer largura.
  *
  * As laterais entram com `alt` vazio de propósito: elas repetem o que a do meio
  * já diz, e três descrições iguais em sequência é ruído pra quem ouve a página.
  */
 const RETRATOS: Retrato[] = [
-  { arquivo: "trio-esq", alt: "", classe: "hidden sm:block" },
+  { arquivo: "trio-esq", alt: "" },
   {
     arquivo: "trio-meio",
     alt: "Pessoa de moletom com capuz usando óculos de armação metálica e lente espelhada.",
   },
-  { arquivo: "trio-dir", alt: "", classe: "hidden sm:block" },
+  { arquivo: "trio-dir", alt: "" },
 ];
 
 export function Abertura() {
@@ -102,20 +119,22 @@ export function Abertura() {
         nele, só no bloco de texto que vem depois. Retrato vertical com margem
         dos dois lados vira cartão, e cartão é o que esta página não tem.
 
-        A altura é presa por `clamp` e as fotos entram com `object-top`. O corte
-        precisa comer por BAIXO, nunca pelo meio: embaixo é a queima, que é preto
+        A altura vem do `min(100vw,…)` no celular e do `clamp` com `vh` no `sm:`
+        pra cima — o porquê está no cabeçalho, em "No celular entram as três". As
+        fotos entram com `object-top`: quando sobra corte vertical ele precisa
+        comer por BAIXO, nunca pelo meio, porque embaixo é a queima, que é preto
         chapado e não custa nada perder; no meio estão os rostos.
       */}
-      <div className="relative h-[clamp(24rem,62vh,34rem)] sm:h-[clamp(28rem,72vh,46rem)]">
-        <div className="grid h-full grid-cols-1 sm:grid-cols-3">
+      <div className="relative h-[min(100vw,22rem)] sm:h-[clamp(28rem,72vh,46rem)]">
+        <div className="grid h-full grid-cols-3">
           {RETRATOS.map((r) => (
-            <div key={r.arquivo} className={`relative h-full ${r.classe ?? ""}`}>
+            <div key={r.arquivo} className="relative h-full">
               <Image
                 src={`/${r.arquivo}.jpg`}
                 width={LARGURA}
                 height={ALTURA}
                 priority
-                sizes="(min-width: 640px) 34vw, 100vw"
+                sizes="34vw"
                 alt={r.alt}
                 className="h-full w-full object-cover object-top"
               />
