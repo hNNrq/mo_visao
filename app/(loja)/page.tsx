@@ -2,6 +2,8 @@ import Link from "next/link";
 import { CardProduto } from "@/componentes/CardProduto";
 import { Abertura } from "@/componentes/Abertura";
 import { Indice } from "@/componentes/Indice";
+import { Obturador } from "@/componentes/Obturador";
+import { DURACAO_NOME } from "@/lib/animacao";
 import { parcelamento, precoBRL } from "@/lib/format";
 import { MODELOS } from "@/lib/modelos";
 import { listarDestaques, precosDaVitrine } from "@/lib/produtos";
@@ -90,9 +92,11 @@ export default async function Home() {
             certos, e simplesmente não aparecia na tela.
           */}
           <div className="relative z-10">
-            <p className="mx-auto mt-10 max-w-[28ch] px-5 text-center font-sans text-xl leading-snug tracking-[0.02em] text-pretty text-paper/80 uppercase sm:mt-12 sm:px-10 sm:text-2xl">
-              Não passe despercebido.
-            </p>
+            <Obturador
+              texto="Não passe despercebido."
+              atraso={DURACAO_NOME}
+              className="mx-auto mt-10 max-w-[28ch] px-5 text-center font-sans text-[1.5625rem] leading-snug tracking-[0.02em] text-paper/80 uppercase sm:mt-12 sm:px-10 sm:text-[1.875rem]"
+            />
 
             {/*
               Ação e cota centralizadas, e o preço DEBAIXO do botão em vez de ao
@@ -102,20 +106,17 @@ export default async function Home() {
             <div className="mt-9 flex flex-col items-center gap-6 sm:mt-10">
               <Link
                 href="/produtos"
-                className="skew-brand inline-block bg-gold px-8 py-4 font-display text-lg font-black tracking-tight text-ink uppercase transition-colors hover:bg-gold-deep sm:px-10 sm:py-5 sm:text-xl"
+                className="skew-brand inline-block bg-gold px-8 py-4 font-display text-[1.40625rem] font-black tracking-tight text-ink uppercase transition-colors hover:bg-gold-deep sm:px-10 sm:py-5 sm:text-[1.5625rem]"
               >
                 <span className="unskew">Ver o catálogo</span>
               </Link>
 
               {precos.minimo !== null && (
                 <p className="text-center">
-                  <span className="block font-sans text-xs tracking-[0.2em] text-smoke uppercase">
-                    A loja começa em
-                  </span>
-                  <span className="numeros mt-2 block font-mono text-xl leading-none font-bold text-gold sm:text-2xl">
+                  <span className="numeros block font-mono text-[1.5625rem] leading-none font-bold text-gold sm:text-[1.875rem]">
                     {precoBRL(precos.minimo)}
                     {parcelas && (
-                      <span className="ml-3 text-sm font-normal text-smoke">
+                      <span className="ml-3 text-[1.09375rem] font-normal text-smoke">
                         ou {parcelas.parcelas}x de {parcelas.valor}
                       </span>
                     )}

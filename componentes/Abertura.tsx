@@ -1,5 +1,7 @@
 import Image from "next/image";
+import { BlurIn } from "@/componentes/BlurIn";
 import { Fagulhas } from "@/componentes/Fagulhas";
+import { DURACAO_NOME } from "@/lib/animacao";
 
 /**
  * A ABERTURA — três retratos lado a lado, e o nome pousado embaixo.
@@ -33,29 +35,27 @@ import { Fagulhas } from "@/componentes/Fagulhas";
  *
  * ⚠️ **O alinhamento das três é do ARQUIVO, não do CSS.** Linha dos olhos e
  * tamanho do óculos são normalizados no preparador. Por isso as três entram com
- * a mesma classe, o mesmo `sizes` e o mesmo `object-position` — e por isso trocar
+ * a mesma classe, o mesmo `sizes` e o mesmo `object-position` — a exceção é o
+ * zoom de destaque do meio (ver `Retrato`), que parte do olho pra não desalinhar
+ * a fileira. E é por isso que trocar
  * uma foto é mexer no script, nunca aqui.
  *
- * ## No celular entram as três, e quem paga a conta é a ALTURA
+ * ## No celular entra SÓ o retrato do meio
  *
- * ⚠️ Até set/2026 as laterais sumiam no celular (`hidden sm:block`), com o
- * argumento de que 130px de largura por foto viram uma tira de ombro. O
- * argumento estava meio certo: 130px de largura *com a altura de antes* viram.
- * O corte lateral do `object-cover` não é função da largura da coluna sozinha —
- * é da RAZÃO entre as duas. Quanto mais alta a faixa, mais o navegador tem que
- * ampliar a foto pra preencher, e mais largura ele joga fora.
+ * ⚠️ Esta regra já foi e voltou. Até set/2026 as laterais sumiam no celular;
+ * depois entraram as três, com a faixa limitada a `min(100vw,22rem)` pra que o
+ * `object-cover` não transformasse cada coluna numa tira. Ainda em set/2026 o
+ * Henrique pediu pra voltar a mostrar uma só: com 130px de largura, a roupa da
+ * `dir` terminava num corte reto que nem a máscara das bordas disfarçava, e as
+ * três espremidas não conversavam com o resto da página, que é de coluna única.
  *
- * A conta, com a foto em 1200×1800: a coluna mede `100vw/3` e o que sobra da
- * foto é `coluna × 1800 / altura`. A cabeça ocupa uns 540 dos 1200, centrada —
- * então enquanto sobrar ~600px de foto o rosto entra inteiro. Resolvendo:
- * **a faixa não pode ser mais alta do que a tela é larga.** Daí o
- * `min(100vw,22rem)`: em 320px sobram 596px de foto, em 390px sobram 665px.
+ * Com uma foto só, a coluna mede `100vw` e o corte lateral deixa de existir. A
+ * altura passa a ser `min(115vw,30rem)`: a foto em 1200×1800 ocupa 150vw de
+ * altura na largura da tela, então 115vw mostra do topo até dentro da queima
+ * (que fecha em 70%, ~105vw) — rosto inteiro e preto chapado embaixo pro nome.
  *
- * 🔴 **O `vh` saiu do celular de propósito.** O que havia antes era
- * `clamp(24rem,62vh,34rem)`, e num celular alto o `62vh` levava a faixa a
- * ~540px — mais alta do que a tela é larga, que é exatamente o caso em que as
- * três viram tiras. Altura amarrada na ALTURA da tela não sabe nada sobre a
- * largura da coluna, que é a medida que decide o corte. No `sm:` pra cima o
+ * 🔴 **Nada de `vh` no celular.** Altura amarrada na altura da tela não sabe
+ * nada da largura da coluna, que é o que decide o corte. No `sm:` pra cima o
  * `vh` continua, porque lá a coluna é larga o bastante pra não haver corte.
  *
  * O que o corte come é fundo preto, não foto: o preparador já centrou o óculos
@@ -94,10 +94,20 @@ import { Fagulhas } from "@/componentes/Fagulhas";
 const LARGURA = 1200;
 const ALTURA = 1800;
 
-type Retrato = { arquivo: string; alt: string };
+/**
+ * `destaque` amplia o retrato do meio em 12%.
+ *
+ * ⚠️ O zoom parte da LINHA DOS OLHOS (`origin` em 36% da altura), não do centro
+ * nem do topo. O preparador pousa o olho em 34% do arquivo, o que dá entre 34% e
+ * ~38% da caixa conforme a largura da tela; 36% é o meio disso. Com a origem
+ * ali o olho quase não se move ao ampliar (1–2px de erro), e a fileira continua
+ * alinhada. Ampliar a partir do topo ou do centro derrubaria o olho do meio
+ * abaixo ou acima dos laterais.
+ */
+type Retrato = { arquivo: string; alt: string; destaque?: boolean };
 
 /**
- * A ordem é a da tela, e as três aparecem em qualquer largura.
+ * A ordem é a da tela. No celular só a do meio (`destaque`) aparece.
  *
  * As laterais entram com `alt` vazio de propósito: elas repetem o que a do meio
  * já diz, e três descrições iguais em sequência é ruído pra quem ouve a página.
@@ -106,6 +116,7 @@ const RETRATOS: Retrato[] = [
   { arquivo: "trio-esq", alt: "" },
   {
     arquivo: "trio-meio",
+    destaque: true,
     alt: "Pessoa de moletom com capuz usando óculos de armação metálica e lente espelhada.",
   },
   { arquivo: "trio-dir", alt: "" },
@@ -119,24 +130,39 @@ export function Abertura() {
         nele, só no bloco de texto que vem depois. Retrato vertical com margem
         dos dois lados vira cartão, e cartão é o que esta página não tem.
 
-        A altura vem do `min(100vw,…)` no celular e do `clamp` com `vh` no `sm:`
-        pra cima — o porquê está no cabeçalho, em "No celular entram as três". As
+        A altura vem do `min(115vw,…)` no celular e do `clamp` com `vh` no `sm:`
+        pra cima — o porquê está no cabeçalho, em "No celular entra SÓ o retrato do meio". As
         fotos entram com `object-top`: quando sobra corte vertical ele precisa
         comer por BAIXO, nunca pelo meio, porque embaixo é a queima, que é preto
         chapado e não custa nada perder; no meio estão os rostos.
+
+        ⚠️ As laterais de cada coluna ESFUMAM até sumir (`mask-image`). Duas das
+        fotos têm roupa encostando na borda do arquivo — o casaco da `esq`, o
+        capuz e o casaco da `dir` — e, no celular, a coluna ainda corta a foto
+        por cima disso. Sem a máscara a roupa termina numa linha reta vertical
+        contra o preto da coluna vizinha, e a montagem aparece.
+
+        Não é véu: nada é pintado POR CIMA da foto. A máscara só torna a borda
+        transparente, e o que aparece por trás é o `#000000` da página, a mesma
+        cor em que a foto já termina. Os pixels do arquivo não mudam, então a
+        foto não perde qualidade. Tem que ficar na coluna, e não no arquivo, porque
+        é a coluna que decide onde a foto é cortada em cada largura de tela.
       */}
-      <div className="relative h-[min(100vw,22rem)] sm:h-[clamp(28rem,72vh,46rem)]">
-        <div className="grid h-full grid-cols-3">
+      <div className="relative h-[min(115vw,30rem)] sm:h-[clamp(28rem,72vh,46rem)]">
+        <div className="grid h-full grid-cols-1 sm:grid-cols-3">
           {RETRATOS.map((r) => (
-            <div key={r.arquivo} className="relative h-full">
+            <div
+              key={r.arquivo}
+              className={`relative h-full overflow-hidden ${r.destaque ? "" : "hidden sm:block"} [mask-image:linear-gradient(to_right,transparent,#000_16%,#000_84%,transparent)]`}
+            >
               <Image
                 src={`/${r.arquivo}.jpg`}
                 width={LARGURA}
                 height={ALTURA}
                 priority
-                sizes="34vw"
+                sizes={r.destaque ? "(min-width: 640px) 34vw, 100vw" : "34vw"}
                 alt={r.alt}
-                className="h-full w-full object-cover object-top"
+                className={`h-full w-full object-cover object-top ${r.destaque ? "origin-[50%_36%] scale-[1.12]" : ""}`}
               />
             </div>
           ))}
@@ -168,9 +194,11 @@ export function Abertura() {
         problema não existe, e é o mesmo par de faces que a marca já usava.
       */}
       <div className="relative z-10 text-center">
-        <h1 className="-mt-[1.9em] font-marca text-[clamp(1.75rem,5vw,3.25rem)] leading-none font-bold tracking-[0.02em] text-paper uppercase">
-          Mó Visão
-        </h1>
+        <BlurIn
+          word="Mó Visão"
+          duration={DURACAO_NOME}
+          className="-mt-[1.9em] font-marca text-[clamp(2.1875rem,6.25vw,4.0625rem)] leading-none font-bold tracking-[0.02em] text-paper uppercase"
+        />
       </div>
     </div>
   );
