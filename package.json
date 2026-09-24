@@ -11,6 +11,7 @@
     "preparar-juliet": "node scripts/preparar-recorte.js public/hero-juliet-original.png public/hero-juliet.png --margem 0.03",
     "testar:concorrencia": "node scripts/testar-concorrencia.mjs",
     "testar:painel": "node scripts/testar-painel.mjs",
+    "testar:checkout": "node scripts/testar-checkout.mjs",
     "local:semear": "node scripts/semear-local.mjs",
     "demo": "node scripts/demo-produtos.mjs",
     "preparar-trio": "node scripts/preparar-trio.js"

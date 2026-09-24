@@ -21,6 +21,9 @@ const inicial: Resultado = { ok: false };
 export function FormConfig({ config }: { config: Record<string, unknown> }) {
   const [estado, acao, enviando] = useActionState(salvarConfig, inicial);
   const v = (chave: string) => String(config[chave] ?? "");
+  // o banco guarda centavos; o dono lê e digita em reais
+  const reais = (chave: string) =>
+    (Number(config[chave] ?? 0) / 100).toFixed(2).replace(".", ",");
 
   return (
     <form action={acao} className="flex max-w-[560px] flex-col gap-7">
@@ -64,17 +67,46 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
       </label>
 
       <label className="flex flex-col gap-2">
-        <span className={rotulo}>Desconto no Pix (%)</span>
+        <span className={rotulo}>Email que recebe os pedidos</span>
         <input
-          name="desconto_pix_pct"
-          inputMode="numeric"
-          defaultValue={v("desconto_pix_pct")}
-          placeholder="5"
+          name="email_contato"
+          type="email"
+          inputMode="email"
+          defaultValue={v("email_contato")}
+          placeholder="voce@email.com"
+          className={campo}
+        />
+        <span className={dica}>
+          Cada venda paga manda um aviso pra esse email, com o contato do cliente.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Taxa de entrega na região (R$)</span>
+        <input
+          name="frete_local_centavos"
+          inputMode="decimal"
+          defaultValue={reais("frete_local_centavos")}
+          placeholder="0,00"
           className={`${campo} numeros`}
         />
         <span className={dica}>
-          No Pix a taxa é bem menor que no cartão, então o desconto sai quase de
-          graça pra você — e o dinheiro cai na hora. Deixe 0 pra não dar desconto.
+          Somada ao total quando o cliente escolhe entrega. Deixe 0 pra entregar
+          de graça. Retirada nunca paga.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Entrega grátis a partir de (R$)</span>
+        <input
+          name="frete_gratis_acima_centavos"
+          inputMode="decimal"
+          defaultValue={reais("frete_gratis_acima_centavos")}
+          placeholder="0,00"
+          className={`${campo} numeros`}
+        />
+        <span className={dica}>
+          Compra desse valor pra cima não paga a taxa. Deixe 0 pra não usar.
         </span>
       </label>
 

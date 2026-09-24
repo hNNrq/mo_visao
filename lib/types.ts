@@ -54,6 +54,8 @@ export type ProdutoComFotos = Produto & { fotos: ProdutoFoto[] };
 export type Pedido = {
   id: string;
   numero: string;
+  /** abre /pedido/[numero]?k=token pro cliente, que não tem conta */
+  token: string;
   status: PedidoStatus;
   cliente_nome: string;
   cliente_email: string;
@@ -66,7 +68,11 @@ export type Pedido = {
   total_centavos: number;
   mp_preference_id: string | null;
   mp_payment_id: string | null;
+  /** link do Checkout Pro, pra quem voltou sem pagar tentar de novo */
+  mp_init_point: string | null;
   metodo_pagamento: string | null;
+  /** o que o dono precisa resolver fora do fluxo (ex.: estornar) */
+  alerta: string | null;
   pago_em: string | null;
   expira_em: string;
   created_at: string;
@@ -81,14 +87,17 @@ export type PedidoItem = {
   quantidade: number;
 };
 
-/** Item do carrinho, guardado no localStorage do visitante. */
+/**
+ * Item do carrinho, guardado no localStorage do visitante.
+ *
+ * Só o que identifica a escolha. Preço, nome e estoque são relidos do banco
+ * toda vez que o carrinho abre (`conferirCarrinho`) e de novo quando o pedido
+ * nasce (`criar_pedido`) — número guardado no navegador pode estar velho ou
+ * ter sido editado.
+ */
 export type ItemCarrinho = {
   produto_id: string;
-  slug: string;
-  nome: string;
-  preco_centavos: number;
   quantidade: number;
-  foto: string | null;
 };
 
 /** Retorno da função confirmar_pedido() no Postgres. */

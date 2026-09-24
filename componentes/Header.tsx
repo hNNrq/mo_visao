@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ContadorCarrinho } from "@/componentes/ContadorCarrinho";
 
 /**
  * A faixa de utilidade da prancha.
@@ -26,6 +27,10 @@ const LINKS = [
 /**
  * A área do cliente.
  *
+ * ⚠️ **"Conta" saiu em set/2026.** A compra é sem cadastro: o pedido é
+ * acompanhado por link (ver `app/(loja)/pedido/`). `/conta` redireciona pra
+ * `/pedidos` no `next.config.ts`, pra link velho não cair no 404.
+ *
  * No celular só o ícone aparece — três rótulos escritos ao lado dos da esquerda
  * não cabem em 375px sem encolher tudo a um corpo ilegível.
  *
@@ -37,7 +42,6 @@ const LINKS = [
 const CONTA = [
   { href: "/carrinho", texto: "Carrinho", icone: IconeCarrinho },
   { href: "/pedidos", texto: "Pedidos", icone: IconePedidos },
-  { href: "/conta", texto: "Conta", icone: IconeConta },
 ];
 
 const ROTULO =
@@ -67,6 +71,7 @@ export function Header() {
                 <Icone />
                 <span className="hidden sm:inline">{texto}</span>
                 <span className="sr-only sm:hidden">{texto}</span>
+                {href === "/carrinho" && <ContadorCarrinho />}
               </Link>
             </li>
           ))}
@@ -77,7 +82,7 @@ export function Header() {
 }
 
 /*
-  Ícones inline: são três, de traço simples, e herdam a cor do link — não vale
+  Ícones inline: são dois, de traço simples, e herdam a cor do link — não vale
   uma dependência de biblioteca de ícones por causa disso. O traço acompanha o
   da prancha (1.25), não o de interface (1.8): numa folha de desenho existe uma
   espessura de pena só.
@@ -105,14 +110,6 @@ function IconeCarrinho() {
   );
 }
 
-function IconeConta() {
-  return (
-    <svg {...TRACO}>
-      <circle cx="12" cy="8" r="3.6" />
-      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-    </svg>
-  );
-}
 
 function IconePedidos() {
   return (

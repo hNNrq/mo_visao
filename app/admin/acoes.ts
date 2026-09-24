@@ -314,6 +314,8 @@ export async function mudarStatusPedido(id: string, status: string): Promise<Res
     if (status === "cancelado") {
       const { error } = await supabase.rpc("cancelar_pedido", { p_pedido_id: id });
       if (error) throw error;
+      // pedido cancelado não pede mais estorno: o alerta sai junto
+      await supabase.from("pedidos").update({ alerta: null }).eq("id", id);
     } else {
       const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
       if (error) throw error;
@@ -337,8 +339,15 @@ export async function salvarConfig(
       if (typeof bruto !== "string") continue;
       const texto = bruto.trim();
       // campos numéricos viram número; o resto vira string JSON
-      const numerico = /_centavos$|_pct$|_minutos$/.test(chave);
-      const valor: unknown = numerico ? Number(texto || 0) : texto;
+      let valor: unknown = texto;
+      if (/_centavos$/.test(chave)) {
+        // o dono digita em reais ("15" ou "15,00"); o banco guarda centavos
+        // (paraCentavos recusa zero, que aqui é válido: "entrega de graça")
+        valor = !texto || /^[0,.\s]+$/.test(texto) ? 0 : paraCentavos(texto);
+        if (valor === null) return { ok: false, erro: "Confira os valores em reais, como 15,00." };
+      } else if (/_pct$|_minutos$/.test(chave)) {
+        valor = Number(texto || 0);
+      }
 
       const { error } = await supabase
         .from("config")

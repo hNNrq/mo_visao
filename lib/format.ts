@@ -21,10 +21,6 @@ export function parcelamento(
   return { parcelas, valor: precoBRL(Math.ceil(centavos / parcelas)) };
 }
 
-export function descontoPix(centavos: number, pct: number): number {
-  return Math.round(centavos * (1 - pct / 100));
-}
-
 export function slugificar(texto: string): string {
   return texto
     .normalize("NFD")
@@ -32,4 +28,17 @@ export function slugificar(texto: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Link de WhatsApp com mensagem pronta.
+ *
+ * O número vem do config ("5511999999999"); qualquer coisa que não seja dígito
+ * sai, porque o dono pode ter digitado com espaço, parêntese ou traço.
+ */
+export function linkWhatsApp(numero: string, mensagem: string): string | null {
+  const digitos = numero.replace(/\D/g, "");
+  // 55 + DDD + número: menos de 12 dígitos é o placeholder do seed ou erro
+  if (digitos.length < 12 || /^5?5?0+$/.test(digitos)) return null;
+  return `https://wa.me/${digitos}?text=${encodeURIComponent(mensagem)}`;
 }

@@ -50,9 +50,11 @@ corrida e rua, e passou a puxar pra rua.
 - **Vitrine:** catálogo, filtro por categoria (`corrida`/`rua`) e por `modelo`,
   página de produto com JSON-LD de preço e disponibilidade.
 - **Painel do dono:** produtos, fotos, estoque, pedidos, configurações. Mobile-first.
-- **Checkout é fase 4 e ainda não existe.** Decisão do Henrique (set/2026): a loja
-  é construída **como se já vendesse** — carrinho, preço e botão de comprar no
-  lugar — pra que ligar o checkout não mexa no design.
+- **Checkout (fase 4):** Mercado Pago **Checkout Pro** — o cliente paga no MP
+  (Pix, crédito, débito; sem boleto) e volta. **Compra sem conta:** nome,
+  WhatsApp e email; o pedido é acompanhado por link com token, e `/pedidos`
+  busca por número + email. Sem desconto no Pix (o Checkout Pro não sabe o
+  método antes de o preço fechar). Decisões do Henrique, set/2026.
 - **Dinheiro nunca passa pela Norman.dgt.** Gateway no CPF/CNPJ do dono, e todas
   as contas (domínio, hospedagem, Supabase, Mercado Pago) no nome dele.
 - **Nunca afirmar procedência do produto.** A marca Oakley aparece como marca do

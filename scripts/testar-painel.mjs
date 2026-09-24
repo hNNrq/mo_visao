@@ -14,7 +14,8 @@ import pg from "pg";
 const SITE = "http://localhost:3000";
 const EMAIL = "dono@movisao.teste";
 const SENHA = "movisao123";
-const FOTO = "../produtos/oculos-preto.png";
+// a foto de teste mora fora do repositório; FOTO_TESTE aponta outra
+const FOTO = process.env.FOTO_TESTE ?? "../produtos/oculos-preto.png";
 const NOME = `Teste E2E ${Date.now()}`;
 
 let passou = 0;
@@ -57,7 +58,8 @@ try {
   await pagina.fill('input[name="preco"]', "349,90");
   await pagina.fill('input[name="estoque"]', "2");
   await pagina.fill('input[name="modelo"]', "Prizm Road");
-  await pagina.check('input[name="destaque"]');
+  // o checkbox fica escondido atrás do interruptor visual: clica no interruptor
+  await pagina.getByText("Mostrar na página inicial").click();
   // pelo nome, não por 'button[type=submit]': o botão "Sair" do cabeçalho
   // do painel vem antes no DOM e seria clicado no lugar
   await pagina.getByRole("button", { name: /Cadastrar óculos/ }).click();
@@ -66,7 +68,7 @@ try {
   const idProduto = pagina.url().match(/produtos\/([0-9a-f-]{36})/)[1];
   ok(!!idProduto, "produto criado e abriu a tela de edição");
 
-  const avisoSalvo = await pagina.getByText("Salvo.").isVisible().catch(() => false);
+  const avisoSalvo = await pagina.getByText("Salvo", { exact: true }).isVisible().catch(() => false);
   ok(avisoSalvo, "mostra confirmação de que salvou");
 
   // ============================================================
@@ -122,7 +124,7 @@ try {
   console.log("\nEsconder da loja:");
 
   await pagina.goto(`${SITE}/admin/produtos`, { waitUntil: "networkidle" });
-  await pagina.getByRole("switch", { name: "Visível na loja" }).first().click();
+  await pagina.getByRole("switch", { name: "Mostrar na loja" }).first().click();
   await pagina.waitForTimeout(3000);
 
   await pagina.goto(`${SITE}/produtos`, { waitUntil: "networkidle" });

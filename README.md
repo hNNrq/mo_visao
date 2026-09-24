@@ -30,6 +30,8 @@ npm run dev
    - `supabase/migrations/002_funcoes.sql`
    - `supabase/migrations/003_rls.sql`
    - `supabase/migrations/004_seed.sql`
+   - `supabase/migrations/005_checkout.sql`
+   - `supabase/migrations/006_permissoes.sql`
 3. Auth > Users > criar o login do dono
 4. Rodar, trocando o e-mail:
    ```sql
@@ -73,23 +75,32 @@ Studio do Supabase: http://127.0.0.1:54323 · `npx supabase stop` derruba tudo.
 npm run testar               # estoque, sem Docker (PGlite, Postgres em processo)
 npm run testar:concorrencia  # duas conexões reais disputando a mesma unidade
 npm run testar:painel        # fluxo do dono no navegador, ponta a ponta
+npm run testar:checkout      # a compra inteira no navegador, ponta a ponta
 ```
 
 | Script | O que cobre | Precisa de |
 |---|---|---|
-| `testar` | reserva, idempotência do webhook, expiração, travas do schema | nada |
+| `testar` | reserva, criar_pedido, idempotência do webhook, expiração, pagamento atrasado, permissões da chave pública, travas do schema | nada |
 | `testar:concorrencia` | dois e dez clientes simultâneos no mesmo produto | Supabase local |
+| `testar:checkout` | produto → carrinho → pedido → página do pedido → meus pedidos → painel; peça reservada por outro; webhook e assinatura; chave pública barrada | Supabase local + `npm run dev` com `MERCADOPAGO_WEBHOOK_SECRET=segredo-teste` |
 | `testar:painel` | entrar, cadastrar, subir foto, mudar preço, ocultar, e o bloqueio de ação sem sessão | Supabase local + `npm run dev` |
 
 ## Estrutura
 
 ```
 app/(loja)/          o que o cliente vê — Header e Footer moram no layout daqui
+app/(loja)/carrinho/ carrinho + fechamento numa tela; acoes.ts cria o pedido
+app/(loja)/pedido/   o pedido do cliente, aberto por token (compra sem conta)
+app/api/mercadopago/ webhook de pagamento
 app/admin/           painel do dono (fora do layout da loja, de propósito)
 app/admin/acoes.ts   Server Actions; cada uma checa permissão por conta própria
 componentes/admin/   telas do painel (mobile-first)
 lib/admin.ts         exigirAdmin() — porteiro de toda Server Action
-lib/format.ts        preço, parcelamento, slug
+lib/format.ts        preço, parcelamento, slug, link de WhatsApp
+lib/carrinho.ts      carrinho no localStorage (só id + quantidade)
+lib/mercadopago.ts   preferência do Checkout Pro, leitura de pagamento, assinatura
+lib/pedidos.ts       processarPagamento() — webhook e volta do MP passam por aqui
+lib/email.ts         Resend por fetch; sem chave, não envia e não quebra
 lib/types.ts         espelho do schema do banco
 lib/supabase/
   client.ts          navegador — chave anon, protegido por RLS
@@ -104,6 +115,7 @@ supabase/migrations/ schema, funções de estoque, RLS, seed
 - [x] Fase 1 — fundação (projeto, tokens da marca, schema, RLS, funções de estoque)
 - [x] Fase 2 — vitrine (hero, catálogo com filtro, página de produto, 404)
 - [x] Fase 3 — painel do dono (login, produtos, fotos, pedidos, ajustes)
-- [ ] Fase 4 — carrinho, checkout, webhook
+- [x] Fase 4 — carrinho, checkout (Mercado Pago Checkout Pro), webhook, email
+  — código pronto; falta a conta do MP do dono e o domínio pra ir ao ar (DEPLOY.md)
 - [ ] Fase 5 — páginas legais, SEO, analytics
 - [ ] Fase 6 — treinamento e entrega

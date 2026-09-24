@@ -1,13 +1,25 @@
 import type { Metadata } from "next";
-import { EmBreve } from "@/componentes/EmBreve";
+import { Carrinho } from "@/componentes/Carrinho";
+import { lerConfig } from "@/lib/produtos";
 
-export const metadata: Metadata = { title: "Carrinho" };
+export const metadata: Metadata = { title: "Carrinho", robots: { index: false } };
 
-export default function PaginaCarrinho() {
+// frete e texto de entrega vêm do painel do dono e mudam sem deploy
+export const dynamic = "force-dynamic";
+
+export default async function PaginaCarrinho() {
+  const config = await lerConfig();
+  const numero = (chave: string, padrao: number) => {
+    const v = Number(config[chave]);
+    return Number.isFinite(v) ? v : padrao;
+  };
+
   return (
-    <EmBreve
-      titulo="Ainda não dá pra fechar aqui"
-      texto="A compra pelo site entra na próxima fase. Por enquanto, escolhe o modelo no catálogo e chama no Instagram — a gente reserva."
+    <Carrinho
+      entregaTexto={String(config.entrega_texto ?? "")}
+      freteLocalCentavos={numero("frete_local_centavos", 0)}
+      freteGratisAcimaCentavos={numero("frete_gratis_acima_centavos", 0)}
+      reservaMinutos={numero("reserva_minutos", 30)}
     />
   );
 }

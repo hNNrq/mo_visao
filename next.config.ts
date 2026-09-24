@@ -28,6 +28,10 @@ const hostEhLocal = ["127.0.0.1", "localhost", "::1"].includes(
 );
 
 const nextConfig: NextConfig = {
+  // "Conta" saiu com a compra sem cadastro (set/2026); link velho vai pros pedidos
+  async redirects() {
+    return [{ source: "/conta", destination: "/pedidos", permanent: false }];
+  },
   images: {
     remotePatterns: [
       {

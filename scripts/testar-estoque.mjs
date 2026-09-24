@@ -41,6 +41,9 @@ await db.exec(`
   create or replace function auth.uid() returns uuid language sql stable as $$
     select current_setting('teste.uid', true)::uuid
   $$;
+  create role anon;
+  create role authenticated;
+  create role service_role;
 `);
 
 // --- migrations reais do projeto ---
@@ -56,6 +59,8 @@ function carregar(arquivo) {
 try {
   await db.exec(carregar("supabase/migrations/001_schema.sql"));
   await db.exec(carregar("supabase/migrations/002_funcoes.sql"));
+  await db.exec(carregar("supabase/migrations/004_seed.sql"));
+  await db.exec(carregar("supabase/migrations/005_checkout.sql"));
 } catch (e) {
   console.error("erro ao carregar as migrations:", e.message);
   process.exit(1);
@@ -160,6 +165,138 @@ ok(r4[0].r === "sem_estoque", "sem peça, avisa 'sem_estoque' pro dono estornar"
 
 ({ rows: p } = await db.query(`select estoque from produtos where id=$1`, [produtoId]));
 ok(p[0].estoque === 0, "não deixa o estoque ficar negativo", `estoque=${p[0].estoque}`);
+
+// ============================================================
+// checkout: criar_pedido
+// ============================================================
+console.log("\nCheckout (criar_pedido):");
+
+const { rows: dois } = await db.query(`
+  insert into produtos (slug, nome, preco_centavos, estoque) values
+    ('juliet', 'Juliet', 50000, 1),
+    ('penny',  'Penny',  30000, 2)
+  returning id, slug
+`);
+const juliet = dois.find((r) => r.slug === "juliet").id;
+const penny = dois.find((r) => r.slug === "penny").id;
+const cliente = JSON.stringify({ nome: "Ana", email: "Ana@Teste.com", telefone: "11999990000" });
+
+async function criar(itensArr, tipo = "retirada", entrega = {}) {
+  const { rows } = await db.query(
+    `select * from criar_pedido($1::jsonb, $2::entrega_tipo, $3::jsonb, $4::jsonb)`,
+    [cliente, tipo, JSON.stringify(entrega), JSON.stringify(itensArr)]
+  );
+  return rows[0];
+}
+
+// preço vem do banco, não do navegador — o payload nem tem campo de preço
+const pedE = await criar([{ produto_id: penny, quantidade: 1 }, { produto_id: juliet, quantidade: 1 }]);
+ok(pedE.total_centavos === 80000, "total sai do preço do banco", `total=${pedE.total_centavos}`);
+ok(/^MV-\d{5}$/.test(pedE.numero), "pedido ganha número MV-00000", pedE.numero);
+ok(typeof pedE.token === "string" && pedE.token.length === 64, "pedido ganha token de 64 caracteres");
+
+let { rows: itE } = await db.query(
+  `select nome_snapshot, preco_snapshot_centavos from pedido_itens where pedido_id=$1 order by nome_snapshot`,
+  [pedE.id]
+);
+ok(itE.length === 2 && itE[0].preco_snapshot_centavos === 50000, "itens gravados com snapshot do preço", JSON.stringify(itE));
+
+let { rows: emailE } = await db.query(`select cliente_email from pedidos where id=$1`, [pedE.id]);
+ok(emailE[0].cliente_email === "ana@teste.com", "email guardado em minúsculas", emailE[0].cliente_email);
+
+({ rows: p } = await db.query(`select reservado from produtos where id=$1`, [juliet]));
+ok(p[0].reservado === 1, "estoque do Juliet reservado", JSON.stringify(p[0]));
+
+// o Juliet acabou: o pedido inteiro volta, inclusive a reserva do Penny
+let semEstoque = false;
+try {
+  await criar([{ produto_id: penny, quantidade: 1 }, { produto_id: juliet, quantidade: 1 }]);
+} catch (e) {
+  semEstoque = String(e.message).includes("SEM_ESTOQUE");
+}
+ok(semEstoque, "carrinho com peça esgotada é recusado");
+({ rows: p } = await db.query(`select reservado from produtos where id=$1`, [penny]));
+ok(p[0].reservado === 1, "e não deixa reserva do outro item pendurada", `penny reservado=${p[0].reservado}`);
+
+// o mesmo produto duas vezes vira uma linha só, e a soma é conferida
+let passou2 = false;
+try {
+  await criar([{ produto_id: penny, quantidade: 1 }, { produto_id: penny, quantidade: 1 }]);
+} catch (e) {
+  passou2 = String(e.message).includes("SEM_ESTOQUE");
+}
+ok(passou2, "item repetido no carrinho soma e respeita o estoque (só sobrou 1 Penny)");
+
+let vazio = false;
+try {
+  await criar([]);
+} catch (e) {
+  vazio = String(e.message).includes("CARRINHO_VAZIO");
+}
+ok(vazio, "carrinho vazio é recusado");
+
+let correios = false;
+try {
+  await criar([{ produto_id: penny, quantidade: 1 }], "correios");
+} catch (e) {
+  correios = String(e.message).includes("ENTREGA_INDISPONIVEL");
+}
+ok(correios, "envio pelos Correios ainda não é aceito");
+
+// frete da região, e frete grátis acima do valor
+await db.query(`update config set valor='1500'::jsonb where chave='frete_local_centavos'`);
+const pedF = await criar([{ produto_id: penny, quantidade: 1 }], "local", { endereco: "Rua X, 10" });
+ok(pedF.total_centavos === 31500, "entrega na região soma a taxa", `total=${pedF.total_centavos}`);
+await db.query(`update pedidos set expira_em = now() - interval '1 minute' where id=$1`, [pedF.id]);
+
+await db.query(`update config set valor='30000'::jsonb where chave='frete_gratis_acima_centavos'`);
+// criar_pedido libera o vencido (pedF) antes de reservar — sem depender de cron
+const pedG = await criar([{ produto_id: penny, quantidade: 1 }], "local", { endereco: "Rua X, 10" });
+ok(pedG.total_centavos === 30000, "acima do valor mínimo, a entrega sai de graça", `total=${pedG.total_centavos}`);
+let { rows: stF } = await db.query(`select status from pedidos where id=$1`, [pedF.id]);
+ok(stF[0].status === "expirado", "criar_pedido expira a reserva vencida sem precisar de cron", stF[0].status);
+
+// ============================================================
+// pagamento atrasado num pedido de dois itens
+// ============================================================
+console.log("\nPix atrasado com dois itens, um deles já vendido:");
+
+// pedE (Penny + Juliet) vence; o Juliet é vendido pra outra pessoa no balcão
+await db.query(`update pedidos set expira_em = now() - interval '1 minute' where id=$1`, [pedE.id]);
+await db.query(`select liberar_reservas_expiradas()`);
+await db.query(`update produtos set estoque = 0 where id=$1`, [juliet]);
+await db.query(`update produtos set estoque = 2, reservado = 0 where id=$1`, [penny]);
+await db.query(`update pedidos set status='cancelado' where id=$1`, [pedG.id]);
+
+const { rows: r5 } = await db.query(`select confirmar_pedido($1,'mp_5','pix') as r`, [pedE.id]);
+ok(r5[0].r === "sem_estoque", "devolve sem_estoque", r5[0].r);
+({ rows: p } = await db.query(`select estoque from produtos where id=$1`, [penny]));
+ok(p[0].estoque === 2, "o Penny NÃO foi baixado pela metade", `penny estoque=${p[0].estoque}`);
+let { rows: alE } = await db.query(`select status, alerta, mp_payment_id from pedidos where id=$1`, [pedE.id]);
+ok(alE[0].alerta && alE[0].mp_payment_id === "mp_5" && alE[0].status === "expirado",
+  "o pedido fica marcado pro dono estornar", JSON.stringify(alE[0]));
+
+// ============================================================
+// permissões: a chave pública não chama função de estoque
+// ============================================================
+console.log("\nPermissões:");
+
+for (const [fn, args] of [
+  ["reservar_estoque", "'[]'::jsonb"],
+  ["confirmar_pedido", "gen_random_uuid(), 'x', 'x'"],
+  ["liberar_reservas_expiradas", ""],
+  ["criar_pedido", "'{}'::jsonb, 'retirada', '{}'::jsonb, '[]'::jsonb"],
+]) {
+  let negado = false;
+  try {
+    await db.exec(`set role anon; select ${fn}(${args});`);
+  } catch (e) {
+    negado = /permission denied/i.test(e.message);
+  } finally {
+    await db.exec(`reset role;`);
+  }
+  ok(negado, `anon não executa ${fn}()`);
+}
 
 // ============================================================
 // proteções do schema

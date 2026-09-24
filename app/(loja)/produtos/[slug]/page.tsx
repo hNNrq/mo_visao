@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BotaoComprar } from "@/componentes/BotaoComprar";
 import { Galeria } from "@/componentes/Galeria";
 import { parcelamento, precoBRL } from "@/lib/format";
 import { buscarProduto } from "@/lib/produtos";
@@ -115,17 +116,9 @@ export default async function PaginaProduto({ params }: Props) {
                       : `Últimas ${produto.disponivel} unidades`}
                   </p>
                 )}
-                {/* vira botão de carrinho de verdade na fase 4 */}
-                <button
-                  type="button"
-                  disabled
-                  className="carimbo skew-brand w-full bg-gold px-10 py-5 font-display text-2xl font-black tracking-tight uppercase text-ink disabled:opacity-55 sm:w-auto"
-                >
-                  <span className="unskew">Comprar</span>
-                </button>
+                <BotaoComprar produtoId={produto.id} />
                 <p className="mt-4 max-w-[46ch] font-sans text-base text-smoke">
-                  A compra pelo site ainda não abriu. Chama no Instagram que a
-                  gente reserva essa.
+                  Pix, crédito ou débito pelo Mercado Pago.
                 </p>
               </>
             ) : (

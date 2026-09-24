@@ -1,0 +1,10 @@
+# Netlify — o plano grátis permite uso comercial (o Hobby da Vercel não).
+# O Next é detectado sozinho pelo adaptador oficial (OpenNext); aqui só fica
+# o que precisa estar escrito.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

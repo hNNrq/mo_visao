@@ -31,6 +31,14 @@ const NOMES: Record<string, string> = {
   expirado: "Expirado",
 };
 
+/** O que o Mercado Pago grava, no nome que o dono usa. */
+const METODOS: Record<string, string> = {
+  pix: "Pix",
+  credit_card: "Crédito",
+  debit_card: "Débito",
+  account_money: "Saldo MP",
+};
+
 /**
  * Só o pedido que PEDE alguma coisa dele leva carimbo de ouro. Separado,
  * entregue e cancelado são letra miúda: se todo estado brilhar, brilhar para
@@ -52,9 +60,12 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
 
-  const acoes = PROXIMO[pedido.status] ?? [];
+  const acoes = pedido.alerta
+    ? [{ valor: "cancelado", texto: "Já estornei — encerrar" }]
+    : (PROXIMO[pedido.status] ?? []);
   const entrega = pedido.entrega as Record<string, string>;
-  const carimbado = CARIMBADO[pedido.status];
+  // pedido que pede estorno pede ação dele tanto quanto um pago
+  const carimbado = CARIMBADO[pedido.status] || !!pedido.alerta;
 
   return (
     <li
@@ -74,13 +85,16 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
               hour: "2-digit",
               minute: "2-digit",
             })}
-            {pedido.metodo_pagamento && ` · ${pedido.metodo_pagamento}`}
+            {pedido.metodo_pagamento &&
+              ` · ${METODOS[pedido.metodo_pagamento] ?? pedido.metodo_pagamento}`}
           </p>
         </div>
 
         {carimbado ? (
           <span className="carimbo skew-brand inline-block bg-gold px-3 py-1.5 font-display text-sm font-black tracking-tight uppercase text-ink">
-            <span className="unskew">{NOMES[pedido.status] ?? pedido.status}</span>
+            <span className="unskew">
+              {pedido.alerta ? "Estornar" : (NOMES[pedido.status] ?? pedido.status)}
+            </span>
           </span>
         ) : (
           <span className="font-sans text-sm tracking-[0.16em] uppercase text-smoke">
@@ -88,6 +102,12 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
           </span>
         )}
       </div>
+
+      {pedido.alerta && (
+        <p className="mt-4">
+          <Aviso>{pedido.alerta}</Aviso>
+        </p>
+      )}
 
       <ul className="mt-5 flex flex-col gap-1.5">
         {pedido.itens?.map((item) => (
@@ -137,6 +157,7 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
               : "Entrega na região"}
           {entrega?.endereco ? ` · ${entrega.endereco}` : ""}
         </p>
+        {entrega?.observacao && <p className="mt-1 text-smoke">“{entrega.observacao}”</p>}
       </div>
 
       {acoes.length > 0 && (

@@ -1,19 +1,24 @@
-# Subir o site — Supabase + Vercel
+# Subir o site — Supabase + Netlify + Mercado Pago
 
-Passo a passo do primeiro deploy. A ordem importa: o Supabase vem antes,
-porque a Vercel precisa das chaves dele pra buildar.
+Passo a passo do deploy. A ordem importa: o Supabase vem antes, porque a
+Netlify precisa das chaves dele pra buildar.
 
 Repositório: https://github.com/hNNrq/mo_visao
+
+> **Por que Netlify e não Vercel (set/2026):** o plano Hobby da Vercel proíbe
+> uso comercial, e a loja vende. O plano grátis da Netlify permite. O primeiro
+> deploy de demonstração foi na Vercel; a loja que vende sobe na Netlify.
 
 ---
 
 ## Antes de começar
 
-**As contas nascem no nome do dono** (Supabase, Vercel, domínio), com o
-Henrique como colaborador. É o que permite entregar a loja e sair sem
-sequestrar nada. Se pra essa demo for mais rápido criar na conta da
+**As contas nascem no nome do dono** (Supabase, Netlify, Mercado Pago, Resend,
+domínio), com o Henrique como colaborador. É o que permite entregar a loja e
+sair sem sequestrar nada. Se pra uma demo for mais rápido criar na conta da
 Norman.dgt, tudo bem — mas anota que vai ter que migrar, e migrar projeto do
-Supabase significa recriar o banco e reconfigurar as chaves.
+Supabase significa recriar o banco e reconfigurar as chaves. **O Mercado Pago
+não tem exceção:** o dinheiro nunca passa pela conta da Norman.dgt.
 
 ---
 
@@ -23,21 +28,18 @@ Supabase significa recriar o banco e reconfigurar as chaves.
 
 Em [supabase.com/dashboard](https://supabase.com/dashboard) > **New project**.
 
-- **Region:** casar com a região das funções da Vercel, que por padrão rodam em
-  Washington (`iad1` / us-east-1). Quem faz consulta ao banco é o servidor da
-  Vercel, não o navegador do visitante — então Supabase em São Paulo com Vercel
-  em Washington é o pior dos dois mundos: cada consulta atravessa o continente.
-  O projeto atual está em `us-east-1`, colado na Vercel, e é o certo pra esse
-  arranjo. Só valeria São Paulo se as funções também fossem movidas pra `gru1`.
-  A latência que o visitante sente é o salto até a Vercel, e o conteúdo estático
-  sai do CDN de qualquer jeito.
+- **Region:** `us-east-1`. Quem consulta o banco é o servidor (as funções da
+  Netlify rodam por padrão em `us-east-2`, Ohio), não o navegador do
+  visitante — então o banco fica colado nas funções, não no cliente. Supabase
+  em São Paulo com funções nos EUA é o pior dos dois mundos: cada consulta
+  atravessa o continente. O projeto atual já está em `us-east-1`.
 - **Database password:** gera uma forte e guarda. Não é a senha do painel do
   site; é a do banco, e o Supabase não mostra de novo.
 
 ### 1.2 Rodar as migrations
 
-**SQL Editor** > **New query**. Rodar os quatro arquivos de
-`supabase/migrations/`, **na ordem**, um de cada vez:
+`npx supabase db push`, ou pelo **SQL Editor** > **New query**, rodando os
+seis arquivos de `supabase/migrations/` **na ordem**, um de cada vez:
 
 | Arquivo | O que cria |
 |---|---|
@@ -45,9 +47,29 @@ Em [supabase.com/dashboard](https://supabase.com/dashboard) > **New project**.
 | `002_funcoes.sql` | `is_admin()` e as funções de reserva de estoque |
 | `003_rls.sql` | as regras de segurança **e o bucket `produtos`** |
 | `004_seed.sql` | os textos editáveis do site |
+| `005_checkout.sql` | `criar_pedido()`, token do pedido, travas de permissão e o job que expira reserva |
+| `006_permissoes.sql` | o acesso de cada role da API escrito à mão (ver abaixo) |
 
 Rodar fora de ordem quebra: o `003` depende das tabelas do `001` e da
-`is_admin()` do `002`.
+`is_admin()` do `002`, e o `005` reescreve funções do `002`.
+
+> 🔴 **O `005` fecha um furo que existe em todo banco que só tem até o `004`.**
+> Até ele, as funções de estoque eram chamáveis com a chave pública: qualquer
+> visitante conseguia reservar o estoque inteiro da loja pelo console do
+> navegador, ou marcar pedido como pago. Se o banco já está no ar sem o `005`,
+> aplicar é a primeira coisa a fazer.
+
+> 🔴 **Sem o `006`, banco criado hoje nasce quebrado.** O Supabase parou de
+> conceder acesso automático às tabelas do `public` em projeto novo: vitrine
+> vazia, painel recusando o dono e checkout com "permission denied". O banco
+> da demo nasceu no padrão antigo; o do dono, criado do zero, não.
+
+> **O `005` liga o pg_cron** pra devolver ao estoque, a cada 5 minutos, as
+> reservas de quem não pagou. Conferir em **Database > Extensions** que
+> `pg_cron` ficou ativa, e em **Integrations > Cron** que o job
+> `liberar-reservas-expiradas` aparece. Se o cron não subir, a loja continua
+> certa — todo pedido novo libera as reservas vencidas antes de reservar —, só
+> demora mais pra peça reaparecer na vitrine.
 
 > O bucket das fotos é criado pelo `003_rls.sql`, já marcado como público.
 > **Não crie o bucket na mão pelo painel antes disso.** O insert é
@@ -96,68 +118,164 @@ essa área".
 
 ---
 
-## 2. Vercel
+## 2. Mercado Pago (conta do dono)
 
-### 2.1 Importar
+### 2.1 Criar a aplicação
 
-[vercel.com/new](https://vercel.com/new) > importar `hNNrq/mo_visao`.
+[mercadopago.com.br/developers/panel/app](https://www.mercadopago.com.br/developers/panel/app)
+> **Criar aplicação** > *Pagamentos online* > **Checkout Pro**.
 
-O repositório **é** a raiz do projeto Next — não mexer em *Root Directory*.
-Framework, build e output a Vercel detecta sozinha.
+### 2.2 Credenciais
 
-### 2.2 Variáveis de ambiente
+Na aplicação, **Credenciais de produção** > **Access Token** →
+`MERCADOPAGO_ACCESS_TOKEN`.
 
-Antes de clicar em Deploy, em **Environment Variables**, as três (e só as
-três — o código não lê mais nada hoje):
+Pra testar antes de valer: **Credenciais de teste** e as contas de teste do
+próprio painel (uma vendedora, uma compradora). Com o token de teste, o
+Checkout Pro aceita os
+[cartões de teste](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/additional-content/your-integrations/test/cards)
+e nenhum dinheiro de verdade se move.
+
+### 2.3 Webhook
+
+Na aplicação, **Webhooks > Configurar notificações**:
+
+- **URL de produção:** `https://DOMINIO/api/mercadopago/webhook`
+- **Eventos:** só **Pagamentos**
+- Salvar e copiar a **assinatura secreta** → `MERCADOPAGO_WEBHOOK_SECRET`
+
+Cada preferência de pagamento já leva essa URL, então o webhook chega mesmo sem
+esse passo. O painel serve pra ter a assinatura secreta, que é o que prova que
+a notificação veio mesmo do MP. Sem ela o site continua funcionando (o
+pagamento é sempre relido na API do MP antes de qualquer coisa mudar), mas
+avisa no log.
+
+### 2.4 Parcelamento sem juros
+
+O site mostra "ou 6x de R$ X". Quem decide se é sem juros é a **conta do
+dono**, não o código: no app do Mercado Pago, **Seu negócio > Custos >
+Parcelamento sem acréscimo**, até 6x. Sem isso, o cliente vê 6x no site e 6x
+**com juros** no checkout — a promessa quebra na última tela.
+
+### 2.5 O que o checkout não oferece, de propósito
+
+- **Boleto**, excluído: leva até 3 dias pra compensar, e a peça fica reservada
+  por 30 minutos.
+- **Desconto no Pix**: no Checkout Pro o cliente escolhe a forma de pagamento
+  dentro do Mercado Pago, depois que o preço já fechou. Saiu do painel em
+  set/2026.
+
+---
+
+## 3. Resend (email de confirmação)
+
+Manda a confirmação pro cliente e o aviso de "pedido pago" pro dono. O plano
+grátis cobre 3 mil emails por mês.
+
+1. [resend.com](https://resend.com) > conta no email do dono
+2. **Domains > Add domain** com o domínio da loja, e colar os registros DNS
+   que ele mostra no painel do domínio (Registro.br ou onde estiver)
+3. **API Keys > Create** → `RESEND_API_KEY`
+4. `EMAIL_REMETENTE` = `Mó Visão <pedidos@DOMINIO>` (do domínio verificado)
+5. `EMAIL_DONO` = pra onde vai o aviso de venda. Opcional: sem ela, vale o
+   email que o dono preencher em **Ajustes** no painel
+
+**Sem domínio verificado, nada quebra:** o site não manda email e segue
+vendendo. O cliente vê a confirmação na tela, e o dono vê o pedido no painel.
+
+---
+
+## 4. Netlify
+
+### 4.1 Importar
+
+[app.netlify.com](https://app.netlify.com) > **Add new site > Import an
+existing project** > GitHub > `hNNrq/mo_visao`.
+
+O repositório **é** a raiz do projeto Next. Build e publish estão no
+`netlify.toml`, e a Netlify detecta o Next e instala o adaptador sozinha.
+
+### 4.2 Variáveis de ambiente
+
+**Site configuration > Environment variables**, antes do primeiro deploy:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SITE_URL            https://DOMINIO  (sem barra no fim)
+MERCADOPAGO_ACCESS_TOKEN
+MERCADOPAGO_WEBHOOK_SECRET
+RESEND_API_KEY                  opcional
+EMAIL_REMETENTE                 opcional
+EMAIL_DONO                      opcional
 ```
 
-Marcar as três pra **Production, Preview e Development**.
+`NEXT_PUBLIC_SITE_URL` precisa ser o endereço **https** de verdade: é pra onde
+o Mercado Pago devolve o cliente e manda o webhook. Com `http://` o MP recusa
+o retorno automático, e o site cai no modo de desenvolvimento (seção 6).
 
-> `NEXT_PUBLIC_SITE_URL`, `MERCADOPAGO_*`, `RESEND_*` e `CRON_SECRET` estão no
-> `.env.example` mas **ainda não são lidos por nenhum arquivo**. Entram quando
-> o checkout for construído. Não perca tempo com elas agora.
+`CRON_SECRET` e `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` estão no `.env.example`,
+mas nenhum arquivo lê: o cron mora no Supabase (1.2), e o Checkout Pro não
+precisa da chave pública.
 
-### 2.3 Uma pegadinha do build
+### 4.3 Domínio
+
+**Domain management > Add a domain**. Depois de apontar, trocar
+`NEXT_PUBLIC_SITE_URL` e a URL do webhook no MP (2.3) pro domínio final, e
+**redeployar**.
+
+### 4.4 Uma pegadinha do build
 
 O `next.config.ts` monta a lista de hosts autorizados do `next/image` a partir
 da `NEXT_PUBLIC_SUPABASE_URL` — **em tempo de build**. Consequência: se você
 trocar a URL do Supabase depois, tem que **redeployar**, não basta salvar a
 variável. Sem isso as fotos de produto param de carregar sem erro visível.
+Vale o mesmo pra `NEXT_PUBLIC_SITE_URL`.
 
 ---
 
-## Estado do projeto (09/09/2026)
+## Estado do projeto (24/09/2026)
 
 Já feito, não precisa refazer:
 
 - projeto `mo_visao` criado (ref `etrgjradkasgpximbpre`, us-east-1)
-- as quatro migrations aplicadas por `supabase db push`
+- migrations `001` a `004` aplicadas por `supabase db push` — **o `005` ainda
+  não**
 - bucket `produtos` criado e **público**
 - `config` semeada com as 9 chaves editáveis
 - `henriquenorman@gmail.com` criado no Auth e inserido em `admins`
 - RLS conferido na chave pública: lê produto, não lê `admins`, não escreve
 - **três óculos de demonstração no ar**, com foto, semeados por
-  `npm run demo -- --confirmar` (ver seção 3). São de exemplo: o dono apaga ou
+  `npm run demo -- --confirmar` (ver seção 5). São de exemplo: o dono apaga ou
   edita pelo painel quando cadastrar o estoque de verdade
+- demo publicada na Vercel
 
-Falta: **o login do dono**. Hoje o único admin é o do Henrique. Antes de
-entregar, criar o usuário dele em Authentication e inserir na tabela `admins`
-do mesmo jeito.
+Falta, nessa ordem:
+
+1. aplicar o `005_checkout.sql` no banco do ar
+2. conta do Mercado Pago do dono (seção 2) e domínio (Resend e Netlify
+   dependem dele)
+3. subir na Netlify (seção 4) e tirar a demo da Vercel
+4. **o login do dono**. Hoje o único admin é o do Henrique. Antes de entregar,
+   criar o usuário dele em Authentication e inserir na tabela `admins` do mesmo
+   jeito
 
 ---
 
-## 3. Depois que subir
+## 5. Depois que subir
 
 1. Abrir `/admin/entrar` e logar com o usuário do passo 1.3
 2. Cadastrar 2 ou 3 óculos com foto — a vitrine sobe vazia, e loja vazia não
    apresenta bem
 3. Conferir se a foto aparece no catálogo (se não aparecer, é a pegadinha do
-   2.3)
+   4.4)
+4. Em **Ajustes**, preencher WhatsApp, email que recebe os pedidos e taxa de
+   entrega
+5. **Fazer uma compra de verdade** de valor baixo — um produto de teste a
+   R$ 1,00, ocultado depois — no Pix: tem que voltar pra tela "Pagamento
+   confirmado", o pedido aparecer em **Pedidos** no painel e o email chegar.
+   Depois estornar pelo app do MP e cancelar o pedido no painel
 
 ### Atalho: popular a vitrine pra uma demo
 
@@ -178,13 +296,26 @@ pelo painel, produto por produto.
 
 ---
 
+## 6. Testar o checkout na máquina
+
+Com o Supabase local no ar (ver README) e o **token de teste** do MP no
+`.env.local`:
+
+- O Mercado Pago não alcança `localhost`, então **não chega webhook** e o
+  retorno automático fica desligado. Depois de pagar, clicar em "Voltar ao
+  site" no próprio checkout: a página do pedido recebe o `payment_id` na URL,
+  relê o pagamento no MP e confirma sozinha.
+- Pra testar o webhook de verdade na máquina, expor o `localhost:3000` com um
+  túnel (`npx cloudflared tunnel --url http://localhost:3000`) e pôr a URL
+  https do túnel em `NEXT_PUBLIC_SITE_URL`.
+
+---
+
 ## O que ainda NÃO está no ar
 
-- **Checkout.** Carrinho, conta e pedidos são páginas de "em breve". O cliente
-  vê o caminho da compra, mas não compra.
-- **Mercado Pago.** Nada configurado. A conta é do dono, sem exceção.
+- **Envio pelos Correios.** Só retirada e entrega na região. O banco já tem o
+  tipo `correios`; o `criar_pedido()` recusa até a fase de frete nacional.
 - **A fonte da marca.** O site sobe com a Anton. A Hard Zone só entra depois da
   licença comercial + webfont comprada — o arquivo de avaliação está fora do
   git e o `@font-face` cai na Anton sozinho quando ele não existe
-  (`app/globals.css`). O `.vercelignore` é a segunda tranca, pro caso de
-  deploy pela CLI.
+  (`app/globals.css`).
