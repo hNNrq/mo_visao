@@ -6,7 +6,7 @@ import { Obturador } from "@/componentes/Obturador";
 import { DURACAO_NOME } from "@/lib/animacao";
 import { parcelamento, precoBRL } from "@/lib/format";
 import { MODELOS } from "@/lib/modelos";
-import { listarDestaques, precosDaVitrine } from "@/lib/produtos";
+import { lerParcelasSemJuros, listarDestaques, precosDaVitrine } from "@/lib/produtos";
 
 // Os destaques mostram estoque; cache aqui exibiria peça que já saiu.
 export const dynamic = "force-dynamic";
@@ -54,11 +54,12 @@ export const dynamic = "force-dynamic";
  * é — e é assim que o compromisso sobrevive à troca de mundo sem virar ruído.
  */
 export default async function Home() {
-  const [destaques, precos] = await Promise.all([
+  const [destaques, precos, maxParcelas] = await Promise.all([
     listarDestaques(),
     precosDaVitrine(MODELOS.map((m) => m.nome)),
+    lerParcelasSemJuros(),
   ]);
-  const parcelas = precos.minimo ? parcelamento(precos.minimo) : null;
+  const parcelas = precos.minimo ? parcelamento(precos.minimo, maxParcelas) : null;
 
   return (
     <main className="pt-14">
@@ -183,7 +184,7 @@ export default async function Home() {
             <ul className="mt-10 grid grid-cols-1 gap-x-10 gap-y-12 sm:mt-14 sm:grid-cols-2 lg:grid-cols-3">
               {destaques.map((produto) => (
                 <li key={produto.id}>
-                  <CardProduto produto={produto} />
+                  <CardProduto produto={produto} maxParcelas={maxParcelas} />
                 </li>
               ))}
             </ul>

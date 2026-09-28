@@ -34,8 +34,8 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
-.vercel
+# netlify
+.netlify
 
 # typescript
 *.tsbuildinfo
@@ -46,3 +46,4 @@ next-env.d.ts
 # arquivo e a marca volta pra Anton sozinha, em vez de o site publicar uma
 # fonte que não pode publicar. Some daqui quando a licença for comprada.
 /public/hard-zone-demo.ttf
+deno.lock

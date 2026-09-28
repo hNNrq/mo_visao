@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ContadorCarrinho } from "@/componentes/ContadorCarrinho";
 
 /**
  * A faixa de utilidade da prancha.
@@ -26,8 +27,13 @@ const LINKS = [
 /**
  * A área do cliente.
  *
- * No celular só o ícone aparece — três rótulos escritos ao lado dos da esquerda
- * não cabem em 375px sem encolher tudo a um corpo ilegível.
+ * No celular só o ícone aparece — rótulo escrito ao lado dos da esquerda não
+ * cabe em 375px sem encolher tudo a um corpo ilegível.
+ *
+ * ⚠️ **"Conta" saiu em set/2026, junto com o checkout.** A loja não tem
+ * cadastro: o pedido é acompanhado pelo link dele, e "Pedidos" lista os que
+ * foram feitos neste aparelho. Um ícone de conta prometeria um login que não
+ * existe. `/conta` redireciona pra `/pedidos` pra quem tiver o link salvo.
  *
  * ⚠️ **O alvo de toque é maior que o desenho do ícone.** `py-3 -my-3 px-2 -mx-2`
  * dá 44px de área tocável sem mudar uma linha do layout: o ícone continua com
@@ -37,7 +43,6 @@ const LINKS = [
 const CONTA = [
   { href: "/carrinho", texto: "Carrinho", icone: IconeCarrinho },
   { href: "/pedidos", texto: "Pedidos", icone: IconePedidos },
-  { href: "/conta", texto: "Conta", icone: IconeConta },
 ];
 
 const ROTULO =
@@ -67,6 +72,7 @@ export function Header() {
                 <Icone />
                 <span className="hidden sm:inline">{texto}</span>
                 <span className="sr-only sm:hidden">{texto}</span>
+                {href === "/carrinho" && <ContadorCarrinho />}
               </Link>
             </li>
           ))}
@@ -101,15 +107,6 @@ function IconeCarrinho() {
       <path d="M4 5h2l1.6 9.2a2 2 0 0 0 2 1.8h6.9a2 2 0 0 0 2-1.6L20 8H6.4" />
       <circle cx="10" cy="20" r="1.4" />
       <circle cx="17" cy="20" r="1.4" />
-    </svg>
-  );
-}
-
-function IconeConta() {
-  return (
-    <svg {...TRACO}>
-      <circle cx="12" cy="8" r="3.6" />
-      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
     </svg>
   );
 }

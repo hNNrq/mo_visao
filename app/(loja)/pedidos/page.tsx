@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { EmBreve } from "@/componentes/EmBreve";
+import { MeusPedidos } from "@/componentes/MeusPedidos";
 
-export const metadata: Metadata = { title: "Meus pedidos" };
+export const metadata: Metadata = { title: "Meus pedidos", robots: { index: false } };
 
 export default function PaginaPedidos() {
-  return (
-    <EmBreve
-      titulo="Nenhum pedido por aqui ainda"
-      texto="Assim que a compra pelo site abrir, cada pedido aparece nessa página com o código de rastreio."
-    />
-  );
+  return <MeusPedidos />;
 }

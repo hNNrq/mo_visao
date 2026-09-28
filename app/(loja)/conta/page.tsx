@@ -1,13 +1,9 @@
-import type { Metadata } from "next";
-import { EmBreve } from "@/componentes/EmBreve";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Minha conta" };
-
+/**
+ * A loja não tem cadastro — o pedido se acompanha pelo link dele. A rota fica
+ * pra quem tiver o endereço salvo de quando "Conta" estava no header.
+ */
 export default function PaginaConta() {
-  return (
-    <EmBreve
-      titulo="A conta vem com o checkout"
-      texto="Quando a compra pelo site abrir, é aqui que você salva endereço e forma de pagamento pra não digitar tudo de novo na próxima."
-    />
-  );
+  redirect("/pedidos");
 }

@@ -176,6 +176,15 @@ export async function lerConfig(): Promise<Record<string, unknown>> {
   return Object.fromEntries(data.map((c) => [c.chave, c.valor]));
 }
 
+/**
+ * Quantas parcelas sem juros a loja banca. É o número que a vitrine promete ao
+ * lado do preço, e tem que ser o mesmo configurado na conta do Mercado Pago.
+ */
+export async function lerParcelasSemJuros(): Promise<number> {
+  const n = Number((await lerConfig()).parcelas_sem_juros);
+  return Number.isFinite(n) && n >= 1 ? Math.min(12, Math.floor(n)) : 3;
+}
+
 /** O Postgres não garante ordem no join; a galeria depende dela. */
 function ordenarFotos(produtos: ProdutoComFotos[]): ProdutoComFotos[] {
   return produtos.map((p) => ({

@@ -33,6 +33,9 @@ const db = new PGlite();
 
 // --- stubs do que o Supabase fornece e o PGlite não tem ---
 await db.exec(`
+  create role anon nologin;
+  create role authenticated nologin;
+  create role service_role nologin;
   create schema if not exists auth;
   create table auth.users (id uuid primary key, email text);
   create schema if not exists storage;
@@ -56,6 +59,8 @@ function carregar(arquivo) {
 try {
   await db.exec(carregar("supabase/migrations/001_schema.sql"));
   await db.exec(carregar("supabase/migrations/002_funcoes.sql"));
+  await db.exec(carregar("supabase/migrations/004_seed.sql"));
+  await db.exec(carregar("supabase/migrations/005_checkout.sql"));
 } catch (e) {
   console.error("erro ao carregar as migrations:", e.message);
   process.exit(1);
@@ -160,6 +165,129 @@ ok(r4[0].r === "sem_estoque", "sem peça, avisa 'sem_estoque' pro dono estornar"
 
 ({ rows: p } = await db.query(`select estoque from produtos where id=$1`, [produtoId]));
 ok(p[0].estoque === 0, "não deixa o estoque ficar negativo", `estoque=${p[0].estoque}`);
+
+// ============================================================
+// pago depois de expirar, com DOIS itens e só um deles esgotado
+// ============================================================
+console.log("\nPedido expirado com dois itens, um esgotado:");
+
+const { rows: dupla } = await db.query(`
+  insert into produtos (slug, nome, preco_centavos, estoque) values
+    ('juliet-a', 'Juliet A', 50000, 1),
+    ('penny-b',  'Penny B',  45000, 0)
+  returning id`);
+const [temPeca, semPeca] = dupla.map((d) => d.id);
+const { rows: pe } = await db.query(`
+  insert into pedidos (status, cliente_nome, cliente_email, cliente_telefone,
+                       subtotal_centavos, total_centavos, expira_em)
+  values ('expirado', 'Cliente E', 'e@e.com', '11', 95000, 95000, now() - interval '1 hour')
+  returning id`);
+const pedidoE = pe[0].id;
+await db.query(
+  `insert into pedido_itens (pedido_id, produto_id, nome_snapshot, preco_snapshot_centavos, quantidade)
+   values ($1, $2, 'Juliet A', 50000, 1), ($1, $3, 'Penny B', 45000, 1)`,
+  [pedidoE, temPeca, semPeca]
+);
+const { rows: r5 } = await db.query(`select confirmar_pedido($1,'mp_5','pix') as r`, [pedidoE]);
+ok(r5[0].r === "sem_estoque", "avisa sem_estoque", r5[0].r);
+({ rows: p } = await db.query(`select estoque from produtos where id=$1`, [temPeca]));
+ok(p[0].estoque === 1, "o item que TINHA peça não foi baixado pela metade", `estoque=${p[0].estoque}`);
+({ rows: p } = await db.query(`select precisa_estorno, mp_payment_id from pedidos where id=$1`, [pedidoE]));
+ok(p[0].precisa_estorno === true && p[0].mp_payment_id === "mp_5", "pedido fica marcado pro dono estornar", JSON.stringify(p[0]));
+
+// ============================================================
+// criar_pedido — o checkout
+// ============================================================
+console.log("\nCheckout (criar_pedido):");
+
+await db.query(`update config set valor = '5' where chave = 'desconto_pix_pct'`);
+await db.query(`update config set valor = '1500' where chave = 'frete_local_centavos'`);
+await db.query(`update config set valor = '0' where chave = 'frete_gratis_acima_centavos'`);
+const { rows: cp } = await db.query(`
+  insert into produtos (slug, nome, preco_centavos, estoque) values
+    ('romeo-c', 'Romeo C', 40000, 2),
+    ('inativo', 'Inativo', 10000, 5)
+  returning id`);
+const [romeo, inativo] = cp.map((d) => d.id);
+await db.query(`update produtos set ativo = false where id = $1`, [inativo]);
+
+const CLIENTE = JSON.stringify({ nome: " Ana ", email: "ANA@X.COM ", telefone: "31999990000" });
+const criar = (itens, entrega = "local", pagamento = "pix") =>
+  db.query(`select * from criar_pedido($1::jsonb, $2::entrega_tipo, $3::jsonb, $4::jsonb, $5)`, [
+    CLIENTE, entrega, JSON.stringify({ endereco: "Rua A, 1" }), JSON.stringify(itens), pagamento,
+  ]);
+
+// o navegador manda a mesma peça em duas linhas — tem que virar uma só
+const { rows: np } = await criar([
+  { produto_id: romeo, quantidade: 1 },
+  { produto_id: romeo, quantidade: 1 },
+]);
+const novo = np[0];
+({ rows: p } = await db.query(
+  `select subtotal_centavos s, frete_centavos f, desconto_centavos d, total_centavos t,
+          cliente_nome, cliente_email, pagamento_escolhido,
+          (select count(*)::int from pedido_itens where pedido_id = pedidos.id) linhas
+     from pedidos where id = $1`, [novo.id]));
+ok(p[0].s === 80000 && p[0].f === 1500 && p[0].d === 4000 && p[0].t === 77500,
+  "preço do banco, frete da região e 5% de Pix só sobre as peças", JSON.stringify(p[0]));
+ok(p[0].linhas === 1, "linhas repetidas viram um item com quantidade 2");
+ok(p[0].cliente_nome === "Ana" && p[0].cliente_email === "ana@x.com", "limpa nome e email");
+ok(novo.total_centavos === 77500 && /^MV-\d{5}$/.test(novo.numero), "devolve número e total", JSON.stringify(novo));
+({ rows: p } = await db.query(`select reservado from produtos where id=$1`, [romeo]));
+ok(p[0].reservado === 2, "reservou as duas unidades");
+
+// esgotado: nada pode sobrar do pedido que falhou
+const { rows: antes } = await db.query(`select count(*)::int n from pedidos`);
+let erro = "";
+try { await criar([{ produto_id: romeo, quantidade: 1 }]); } catch (e) { erro = e.message; }
+const { rows: depois } = await db.query(`select count(*)::int n from pedidos`);
+ok(erro.includes("SEM_ESTOQUE") && antes[0].n === depois[0].n,
+  "sem peça, estoura e não deixa pedido pela metade", `${erro} / ${antes[0].n}→${depois[0].n}`);
+
+erro = "";
+try { await criar([{ produto_id: inativo, quantidade: 1 }]); } catch (e) { erro = e.message; }
+ok(erro.includes("PRODUTO_INDISPONIVEL"), "produto fora da loja não entra no pedido", erro);
+
+erro = "";
+try { await criar([]); } catch (e) { erro = e.message; }
+ok(erro.includes("CARRINHO_VAZIO"), "carrinho vazio é recusado", erro);
+
+erro = "";
+try { await criar([{ produto_id: romeo, quantidade: 50 }]); } catch (e) { erro = e.message; }
+ok(erro.includes("QUANTIDADE_INVALIDA"), "não deixa um visitante travar o estoque inteiro", erro);
+
+// reserva vencida não barra o próximo comprador
+await db.query(`update pedidos set expira_em = now() - interval '1 minute' where id = $1`, [novo.id]);
+const { rows: cartao } = await criar([{ produto_id: romeo, quantidade: 1 }], "retirada", "cartao");
+({ rows: p } = await db.query(`select frete_centavos f, desconto_centavos d, total_centavos t from pedidos where id=$1`, [cartao[0].id]));
+ok(p[0].f === 0 && p[0].d === 0 && p[0].t === 40000, "retirada sem frete, cartão sem desconto — e a reserva vencida saiu da frente", JSON.stringify(p[0]));
+
+await db.query(`update config set valor = '50000' where chave = 'frete_gratis_acima_centavos'`);
+await db.query(`update produtos set estoque = estoque + 5 where id = $1`, [romeo]);
+const { rows: gratis } = await criar([{ produto_id: romeo, quantidade: 2 }], "local", "cartao");
+ok(gratis[0].total_centavos === 80000, "frete grátis acima do valor configurado", String(gratis[0].total_centavos));
+
+// ============================================================
+// quem pode chamar as funções
+// ============================================================
+console.log("\nPermissões:");
+
+const { rows: perm } = await db.query(`
+  select
+    has_function_privilege('anon', 'confirmar_pedido(uuid,text,text)', 'execute') as anon_confirma,
+    has_function_privilege('authenticated', 'confirmar_pedido(uuid,text,text)', 'execute') as auth_confirma,
+    has_function_privilege('anon', 'reservar_estoque(jsonb)', 'execute') as anon_reserva,
+    has_function_privilege('anon', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text)', 'execute') as anon_cria,
+    has_function_privilege('anon', 'cancelar_pedido(uuid)', 'execute') as anon_cancela,
+    has_function_privilege('service_role', 'confirmar_pedido(uuid,text,text)', 'execute') as srv_confirma,
+    has_function_privilege('service_role', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text)', 'execute') as srv_cria,
+    has_function_privilege('authenticated', 'cancelar_pedido(uuid)', 'execute') as auth_cancela
+`);
+const pr = perm[0];
+ok(!pr.anon_confirma && !pr.auth_confirma, "visitante NÃO consegue marcar pedido como pago");
+ok(!pr.anon_reserva && !pr.anon_cria, "visitante NÃO reserva estoque nem cria pedido direto no banco");
+ok(!pr.anon_cancela && pr.auth_cancela, "cancelar só com login (e a função ainda checa se é admin)");
+ok(pr.srv_confirma && pr.srv_cria, "o servidor do site continua podendo tudo");
 
 // ============================================================
 // proteções do schema

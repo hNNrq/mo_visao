@@ -1,13 +1,28 @@
 import type { Metadata } from "next";
-import { EmBreve } from "@/componentes/EmBreve";
+import { Carrinho } from "@/componentes/Carrinho";
+import { pagamentoConfigurado } from "@/lib/mercadopago";
+import { lerConfig } from "@/lib/produtos";
 
-export const metadata: Metadata = { title: "Carrinho" };
+export const metadata: Metadata = { title: "Carrinho", robots: { index: false } };
 
-export default function PaginaCarrinho() {
+// frete e desconto são do dono e mudam pelo painel: nada de página congelada
+export const dynamic = "force-dynamic";
+
+const numero = (v: unknown, padrao = 0) => (Number.isFinite(Number(v)) ? Number(v) : padrao);
+
+export default async function PaginaCarrinho() {
+  const config = await lerConfig();
+
   return (
-    <EmBreve
-      titulo="Ainda não dá pra fechar aqui"
-      texto="A compra pelo site entra na próxima fase. Por enquanto, escolhe o modelo no catálogo e chama no Instagram — a gente reserva."
+    <Carrinho
+      config={{
+        descontoPixPct: numero(config.desconto_pix_pct),
+        freteLocalCentavos: numero(config.frete_local_centavos),
+        freteGratisAcimaCentavos: numero(config.frete_gratis_acima_centavos),
+        entregaTexto: String(config.entrega_texto ?? ""),
+        parcelasSemJuros: numero(config.parcelas_sem_juros, 3),
+        pagamentoLigado: pagamentoConfigurado(),
+      }}
     />
   );
 }

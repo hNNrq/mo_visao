@@ -41,11 +41,17 @@ import type { ProdutoComFotos } from "@/lib/types";
 /** Quantas peças ainda contam como "tem", antes do aviso de fim de estoque. */
 const POUCAS = 3;
 
-export function CardProduto({ produto }: { produto: ProdutoComFotos }) {
+export function CardProduto({
+  produto,
+  maxParcelas,
+}: {
+  produto: ProdutoComFotos;
+  maxParcelas?: number;
+}) {
   const foto = produto.fotos[0];
   const esgotado = produto.disponivel <= 0;
   const poucas = !esgotado && produto.disponivel <= POUCAS;
-  const parcelas = parcelamento(produto.preco_centavos);
+  const parcelas = parcelamento(produto.preco_centavos, maxParcelas);
 
   return (
     <Link

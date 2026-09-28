@@ -31,6 +31,16 @@ const NOMES: Record<string, string> = {
   expirado: "Expirado",
 };
 
+/** O Mercado Pago devolve o tipo em inglês; o dono lê em português. */
+const METODOS: Record<string, string> = {
+  bank_transfer: "Pix",
+  pix: "Pix",
+  credit_card: "Cartão de crédito",
+  debit_card: "Cartão de débito",
+  prepaid_card: "Cartão pré-pago",
+  account_money: "Saldo Mercado Pago",
+};
+
 /**
  * Só o pedido que PEDE alguma coisa dele leva carimbo de ouro. Separado,
  * entregue e cancelado são letra miúda: se todo estado brilhar, brilhar para
@@ -54,7 +64,16 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
 
   const acoes = PROXIMO[pedido.status] ?? [];
   const entrega = pedido.entrega as Record<string, string>;
-  const carimbado = CARIMBADO[pedido.status];
+  // pagou depois de vencer e a peça já tinha ido: é o pedido mais urgente da
+  // tela, porque tem dinheiro de cliente parado esperando estorno
+  const estornar = pedido.precisa_estorno && pedido.status === "expirado";
+  const carimbado = CARIMBADO[pedido.status] || estornar;
+  const rotuloStatus = estornar
+    ? "Pagou sem peça — estornar"
+    : (NOMES[pedido.status] ?? pedido.status);
+  const metodo = pedido.metodo_pagamento
+    ? (METODOS[pedido.metodo_pagamento] ?? pedido.metodo_pagamento)
+    : null;
 
   return (
     <li
@@ -74,17 +93,17 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
               hour: "2-digit",
               minute: "2-digit",
             })}
-            {pedido.metodo_pagamento && ` · ${pedido.metodo_pagamento}`}
+            {metodo && ` · ${metodo}`}
           </p>
         </div>
 
         {carimbado ? (
           <span className="carimbo skew-brand inline-block bg-gold px-3 py-1.5 font-display text-sm font-black tracking-tight uppercase text-ink">
-            <span className="unskew">{NOMES[pedido.status] ?? pedido.status}</span>
+            <span className="unskew">{rotuloStatus}</span>
           </span>
         ) : (
           <span className="font-sans text-sm tracking-[0.16em] uppercase text-smoke">
-            {NOMES[pedido.status] ?? pedido.status}
+            {rotuloStatus}
           </span>
         )}
       </div>
@@ -137,6 +156,13 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
               : "Entrega na região"}
           {entrega?.endereco ? ` · ${entrega.endereco}` : ""}
         </p>
+        {entrega?.observacao && <p className="mt-1 text-smoke">“{entrega.observacao}”</p>}
+        {estornar && (
+          <p className="mt-3 text-paper">
+            O pagamento entrou depois do prazo e a peça já tinha sido vendida. Devolva pelo Mercado
+            Pago: abra essa venda e toque em Devolver dinheiro.
+          </p>
+        )}
       </div>
 
       {acoes.length > 0 && (

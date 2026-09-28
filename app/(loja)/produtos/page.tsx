@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CardProduto } from "@/componentes/CardProduto";
 import { Esticar } from "@/componentes/Esticar";
 import { MODELOS } from "@/lib/modelos";
-import { listarProdutos } from "@/lib/produtos";
+import { lerParcelasSemJuros, listarProdutos } from "@/lib/produtos";
 
 // Estoque muda a cada venda — catálogo com cache mostraria peça que já saiu.
 export const dynamic = "force-dynamic";
@@ -56,7 +56,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function PaginaProdutos({ searchParams }: Props) {
   const filtros = lerFiltros(await searchParams);
-  const produtos = await listarProdutos(filtros);
+  const [produtos, maxParcelas] = await Promise.all([
+    listarProdutos(filtros),
+    lerParcelasSemJuros(),
+  ]);
   const semFiltro = !filtros.modelo;
 
   return (
@@ -112,7 +115,7 @@ export default async function PaginaProdutos({ searchParams }: Props) {
           <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
             {produtos.map((produto) => (
               <li key={produto.id}>
-                <CardProduto produto={produto} />
+                <CardProduto produto={produto} maxParcelas={maxParcelas} />
               </li>
             ))}
           </ul>

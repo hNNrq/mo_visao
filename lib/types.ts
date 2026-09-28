@@ -67,6 +67,10 @@ export type Pedido = {
   mp_preference_id: string | null;
   mp_payment_id: string | null;
   metodo_pagamento: string | null;
+  pagamento_escolhido: "pix" | "cartao" | null;
+  mp_checkout_url: string | null;
+  /** pagou depois de a reserva vencer e a peça já tinha ido: estornar */
+  precisa_estorno: boolean;
   pago_em: string | null;
   expira_em: string;
   created_at: string;

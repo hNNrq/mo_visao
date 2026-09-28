@@ -337,7 +337,21 @@ export async function salvarConfig(
       if (typeof bruto !== "string") continue;
       const texto = bruto.trim();
       // campos numéricos viram número; o resto vira string JSON
-      const numerico = /_centavos$|_pct$|_minutos$/.test(chave);
+      // o dono digita reais ("15,90"); o banco guarda centavos
+      if (chave.endsWith("_reais")) {
+        const reais = Number(texto.replace(/./g, "").replace(",", ".") || 0);
+        const centavos = Number.isFinite(reais) ? Math.max(0, Math.round(reais * 100)) : 0;
+        const { error } = await supabase
+          .from("config")
+          .upsert(
+            { chave: chave.replace(/_reais$/, "_centavos"), valor: centavos },
+            { onConflict: "chave" },
+          );
+        if (error) throw error;
+        continue;
+      }
+
+      const numerico = /_centavos$|_pct$|_minutos$|^parcelas_/.test(chave);
       const valor: unknown = numerico ? Number(texto || 0) : texto;
 
       const { error } = await supabase

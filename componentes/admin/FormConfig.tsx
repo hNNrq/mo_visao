@@ -21,6 +21,11 @@ const inicial: Resultado = { ok: false };
 export function FormConfig({ config }: { config: Record<string, unknown> }) {
   const [estado, acao, enviando] = useActionState(salvarConfig, inicial);
   const v = (chave: string) => String(config[chave] ?? "");
+  // centavos no banco, reais na tela
+  const reais = (chave: string) => {
+    const n = Number(config[chave] ?? 0);
+    return n > 0 ? (n / 100).toFixed(2).replace(".", ",") : "0";
+  };
 
   return (
     <form action={acao} className="flex max-w-[560px] flex-col gap-7">
@@ -75,6 +80,50 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
         <span className={dica}>
           No Pix a taxa é bem menor que no cartão, então o desconto sai quase de
           graça pra você — e o dinheiro cai na hora. Deixe 0 pra não dar desconto.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Parcelas sem juros</span>
+        <input
+          name="parcelas_sem_juros"
+          inputMode="numeric"
+          defaultValue={v("parcelas_sem_juros")}
+          placeholder="3"
+          className={`${campo} numeros`}
+        />
+        <span className={dica}>
+          É o que a loja promete ao lado do preço (&quot;3x sem juros&quot;). Tem que
+          ser o MESMO número que está configurado no Mercado Pago — se lá estiver
+          diferente, o cliente vê juros que o site disse que não tinha.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Frete na região (R$)</span>
+        <input
+          name="frete_local_reais"
+          inputMode="decimal"
+          defaultValue={reais("frete_local_centavos")}
+          placeholder="0"
+          className={`${campo} numeros`}
+        />
+        <span className={dica}>
+          Quanto o cliente paga pra receber em casa. Deixe 0 pra entrega grátis.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Frete grátis acima de (R$)</span>
+        <input
+          name="frete_gratis_acima_reais"
+          inputMode="decimal"
+          defaultValue={reais("frete_gratis_acima_centavos")}
+          placeholder="0"
+          className={`${campo} numeros`}
+        />
+        <span className={dica}>
+          Pedido desse valor pra cima não paga entrega. Deixe 0 pra não usar.
         </span>
       </label>
 

@@ -12,7 +12,7 @@ import Link from "next/link";
  * Ela não tenta adivinhar o motivo de propósito: em produção o Next apaga a
  * mensagem do erro de servidor antes de mandar pro cliente, e sobra só o
  * `digest`. Prometer diagnóstico aqui seria mentira — o `digest` é o que
- * localiza a linha nos logs da Vercel, então ele fica visível.
+ * localiza a linha nos logs de função da Netlify, então ele fica visível.
  */
 export default function ErroDoPainel({
   error,

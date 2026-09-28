@@ -1,0 +1,13 @@
+# Netlify — o plano grátis permite uso comercial; o Hobby da Vercel não.
+#
+# O adaptador de Next (OpenNext) a Netlify instala sozinha ao detectar o
+# framework. Não adicionar `@netlify/plugin-nextjs` no package.json: fixar a
+# versão à mão trava o adaptador numa que pode não conhecer o Next 16.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Next 16 exige Node 20.9+. Fixado pra o build não mudar de Node sozinho.
+  NODE_VERSION = "22"

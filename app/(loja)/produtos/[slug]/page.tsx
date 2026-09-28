@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BotaoComprar } from "@/componentes/BotaoComprar";
 import { Galeria } from "@/componentes/Galeria";
-import { parcelamento, precoBRL } from "@/lib/format";
-import { buscarProduto } from "@/lib/produtos";
+import { descontoPix, parcelamento, precoBRL } from "@/lib/format";
+import { buscarProduto, lerConfig } from "@/lib/produtos";
 import { urlFoto } from "@/lib/supabase/publico";
 
 // Estoque precisa estar certo na hora: essa é a página onde a pessoa decide comprar.
@@ -34,12 +35,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PaginaProduto({ params }: Props) {
   const { slug } = await params;
-  const produto = await buscarProduto(slug);
+  const [produto, config] = await Promise.all([buscarProduto(slug), lerConfig()]);
 
   if (!produto) notFound();
 
   const disponivel = produto.disponivel > 0;
-  const parcelas = parcelamento(produto.preco_centavos);
+  const maxParcelas = Number(config.parcelas_sem_juros) || 3;
+  const parcelas = parcelamento(produto.preco_centavos, maxParcelas);
+  const pctPix = Number(config.desconto_pix_pct) || 0;
+  const foto = produto.fotos[0];
   const ultimas = disponivel && produto.disponivel <= 2;
 
   /**
@@ -92,9 +96,14 @@ export default async function PaginaProduto({ params }: Props) {
                 <span className="unskew">{precoBRL(produto.preco_centavos)}</span>
               </span>
             </p>
+            {pctPix > 0 && (
+              <p className="numeros mt-4 font-sans text-lg text-paper">
+                {precoBRL(descontoPix(produto.preco_centavos, pctPix))} no Pix
+              </p>
+            )}
             {parcelas && (
-              <p className="numeros mt-3 font-sans text-lg text-smoke">
-                ou {parcelas.parcelas}x de {parcelas.valor}
+              <p className="numeros mt-1 font-sans text-lg text-smoke">
+                ou {parcelas.parcelas}x de {parcelas.valor} sem juros
               </p>
             )}
           </div>
@@ -115,18 +124,21 @@ export default async function PaginaProduto({ params }: Props) {
                       : `Últimas ${produto.disponivel} unidades`}
                   </p>
                 )}
-                {/* vira botão de carrinho de verdade na fase 4 */}
-                <button
-                  type="button"
-                  disabled
-                  className="carimbo skew-brand w-full bg-gold px-10 py-5 font-display text-2xl font-black tracking-tight uppercase text-ink disabled:opacity-55 sm:w-auto"
-                >
-                  <span className="unskew">Comprar</span>
-                </button>
-                <p className="mt-4 max-w-[46ch] font-sans text-base text-smoke">
-                  A compra pelo site ainda não abriu. Chama no Instagram que a
-                  gente reserva essa.
-                </p>
+                <BotaoComprar
+                  disponivel={produto.disponivel}
+                  item={{
+                    produto_id: produto.id,
+                    slug: produto.slug,
+                    nome: produto.nome,
+                    preco_centavos: produto.preco_centavos,
+                    foto: foto ? urlFoto(foto.storage_path) : null,
+                  }}
+                />
+                {typeof config.entrega_texto === "string" && config.entrega_texto && (
+                  <p className="mt-4 max-w-[46ch] font-sans text-base text-smoke">
+                    {config.entrega_texto}
+                  </p>
+                )}
               </>
             ) : (
               <p className="skew-brand inline-block bg-paper/10 px-8 py-4 font-display text-xl font-black tracking-tight uppercase text-smoke">

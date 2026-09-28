@@ -19,7 +19,8 @@ export default async function PaginaPedidos() {
       `id, numero, status, cliente_nome, cliente_email, cliente_telefone,
        entrega_tipo, entrega, subtotal_centavos, frete_centavos,
        desconto_centavos, total_centavos, mp_preference_id, mp_payment_id,
-       metodo_pagamento, pago_em, expira_em, created_at,
+       metodo_pagamento, pagamento_escolhido, mp_checkout_url, precisa_estorno,
+       pago_em, expira_em, created_at,
        itens:pedido_itens ( id, pedido_id, produto_id, nome_snapshot,
                             preco_snapshot_centavos, quantidade )`
     )
@@ -32,10 +33,12 @@ export default async function PaginaPedidos() {
 
   // o número que muda o dia dele é quantos estão esperando ser separados
   const separar = pedidos.filter((p) => p.status === "pago").length;
+  const estornar = pedidos.filter((p) => p.precisa_estorno && p.status === "expirado").length;
 
   const contagem = [
     `${pedidos.length} ${pedidos.length === 1 ? "pedido" : "pedidos"}`,
     separar > 0 ? `${separar} pra separar` : null,
+    estornar > 0 ? `${estornar} pra estornar` : null,
   ]
     .filter(Boolean)
     .join(" · ");
