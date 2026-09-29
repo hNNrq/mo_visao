@@ -250,7 +250,19 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
             Fechar o pedido
           </h2>
 
-          <form action={enviar} className="mt-8 flex flex-col gap-8" noValidate>
+          {/*
+            onSubmit, e NÃO action={enviar}: com action o React 19 limpa o
+            formulário depois de cada envio — e quando o pedido falha (peça
+            esgotou, Mercado Pago fora) a pessoa perdia nome, WhatsApp e email.
+          */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              enviar(new FormData(e.currentTarget));
+            }}
+            className="mt-8 flex flex-col gap-8"
+            noValidate
+          >
             <fieldset className="flex flex-col gap-6">
               <legend className="sr-only">Teus dados</legend>
               <label className="flex flex-col gap-1">

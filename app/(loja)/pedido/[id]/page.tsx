@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AcompanharPedido } from "@/componentes/AcompanharPedido";
+import { CopiarLink } from "@/componentes/CopiarLink";
 import { lerPedidoPublico, sincronizarPagamento, type PedidoPublico } from "@/lib/checkout";
 import { precoBRL } from "@/lib/format";
 import { lerConfig } from "@/lib/produtos";
@@ -82,12 +83,18 @@ export default async function PaginaPedido({ params, searchParams }: Props) {
           </dl>
           <p className="mt-6 font-sans text-base leading-snug text-smoke">
             {pedido.entrega_tipo === "retirada" ? "Retirada combinada." : "Entrega na região."}{" "}
-            Guarda este link: é por ele que tu acompanha o pedido.{" "}
-            <Link href="/trocas-e-devolucoes" className="underline underline-offset-4 transition-colors hover:text-gold">
+            O endereço desta página é o teu acesso ao pedido — neste aparelho ele fica em
+            &quot;Pedidos&quot;; pra abrir de outro, guarda o link.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <CopiarLink />
+            <Link
+              href="/trocas-e-devolucoes"
+              className="font-sans text-base text-smoke underline underline-offset-4 transition-colors hover:text-gold"
+            >
               Trocas e devoluções
             </Link>
-            .
-          </p>
+          </div>
         </section>
       </div>
     </main>
@@ -112,17 +119,32 @@ function Situacao({
   const primeiroNome = pedido.cliente_nome.split(" ")[0];
 
   if (["pago", "separado", "entregue"].includes(pedido.status)) {
-    const entregue = pedido.status === "entregue";
+    const retirada = pedido.entrega_tipo === "retirada";
+    const titulo =
+      pedido.status === "entregue"
+        ? retirada
+          ? "Retirado. Bom proveito."
+          : "Entregue. Bom proveito."
+        : pedido.status === "separado"
+          ? retirada
+            ? "Separado, pronto pra retirar"
+            : "Separado, pronto pra sair"
+          : `Pagou, ${primeiroNome}. Tá garantido.`;
+    const texto =
+      pedido.status === "entregue"
+        ? "Qualquer coisa com a peça, chama a gente."
+        : pedido.status === "separado"
+          ? retirada
+            ? "Teu óculos já está separado. A gente combina no WhatsApp onde e quando buscar."
+            : "Teu óculos já está separado. A gente combina no WhatsApp o melhor horário pra entregar."
+          : retirada
+            ? "A gente te chama no WhatsApp pra combinar onde e quando buscar."
+            : "A gente te chama no WhatsApp pra combinar a entrega.";
     return (
       <>
-        <h1 className={TITULO}>{entregue ? "Entregue" : `Pagou, ${primeiroNome}. Tá garantido.`}</h1>
-        <p className={TEXTO}>
-          {entregue
-            ? "Bom proveito. Qualquer coisa com a peça, chama a gente."
-            : pedido.entrega_tipo === "retirada"
-              ? "A gente te chama no WhatsApp pra combinar onde e quando buscar."
-              : "A gente te chama no WhatsApp pra combinar a entrega."}
-        </p>
+        <h1 className={TITULO}>{titulo}</h1>
+        <p className={TEXTO}>{texto}</p>
+        <Etapas status={pedido.status} retirada={retirada} pagoEm={pedido.pago_em} />
         {linkWhats && (
           <a href={linkWhats} className={CARIMBO}>
             <span className="unskew">Chamar no WhatsApp</span>
@@ -195,6 +217,70 @@ function Situacao({
         <span className="unskew">Ver os óculos</span>
       </Link>
     </>
+  );
+}
+
+/**
+ * A régua do pedido: Pago → Separado → Entregue.
+ *
+ * Mesmo vocabulário da prancha — chamada numerada em balão redondo, fio de
+ * 1px ligando — e não a barra de progresso colorida de loja pronta. Etapa
+ * feita é balão cheio de ouro com número preto; a de agora leva o rótulo em
+ * papel; a que falta só tem o contorno do balão. O estado
+ * nunca é só cor: a etapa atual vai também escrita pro leitor de tela.
+ *
+ * Só "pago" tem data, porque é o único momento que o banco registra — o dono
+ * marca separado e entregue no painel sem carimbo de hora.
+ */
+function Etapas({
+  status,
+  retirada,
+  pagoEm,
+}: {
+  status: PedidoPublico["status"];
+  retirada: boolean;
+  pagoEm: string | null;
+}) {
+  const etapas = ["Pago", retirada ? "Pronto pra retirar" : "Separado", retirada ? "Retirado" : "Entregue"];
+  const atual = status === "entregue" ? 2 : status === "separado" ? 1 : 0;
+  const data = pagoEm
+    ? new Date(pagoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" })
+    : null;
+
+  return (
+    <ol className="mt-10 grid grid-cols-3" aria-label="Andamento do pedido">
+      {etapas.map((rotulo, i) => {
+        const feita = i <= atual;
+        return (
+          <li key={rotulo} className="relative flex flex-col items-start gap-3 pr-2" aria-current={i === atual ? "step" : undefined}>
+            {/* o fio até a próxima etapa: ouro onde já passou, régua onde falta */}
+            {i < etapas.length - 1 && (
+              <span
+                aria-hidden="true"
+                className={`absolute top-[17px] right-0 left-9 h-px ${i < atual ? "bg-gold" : "bg-regua"}`}
+              />
+            )}
+            <span
+              aria-hidden="true"
+              className={`numeros relative flex size-9 items-center justify-center rounded-full border font-mono text-sm font-bold ${
+                feita ? "border-gold bg-gold text-ink" : "regua text-smoke"
+              }`}
+            >
+              {i + 1}
+            </span>
+            <span
+              className={`font-sans text-sm leading-tight tracking-[0.12em] uppercase sm:text-base ${
+                i === atual ? "text-paper" : "text-smoke"
+              }`}
+            >
+              {rotulo}
+              {i === 0 && data && <span className="numeros mt-1 block normal-case tracking-normal text-smoke">{data}</span>}
+              {i === atual && <span className="sr-only"> (etapa atual)</span>}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Aviso } from "@/componentes/admin/Aviso";
 import { mudarStatusPedido } from "@/app/admin/acoes";
+import { linkWhatsApp } from "@/lib/aviso-cliente";
 import { precoBRL } from "@/lib/format";
 import type { PedidoComItens } from "@/app/admin/(painel)/pedidos/page";
 import type { PedidoStatus } from "@/lib/types";
@@ -48,17 +49,17 @@ const METODOS: Record<string, string> = {
  */
 const CARIMBADO: Record<string, boolean> = { pago: true };
 
-export function ListaPedidos({ pedidos }: { pedidos: PedidoComItens[] }) {
+export function ListaPedidos({ pedidos, site }: { pedidos: PedidoComItens[]; site: string }) {
   return (
     <ul>
       {pedidos.map((p) => (
-        <BlocoPedido key={p.id} pedido={p} />
+        <BlocoPedido key={p.id} pedido={p} site={site} />
       ))}
     </ul>
   );
 }
 
-function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
+function BlocoPedido({ pedido, site }: { pedido: PedidoComItens; site: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
 
@@ -71,6 +72,15 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
   const rotuloStatus = estornar
     ? "Pagou sem peça — estornar"
     : (NOMES[pedido.status] ?? pedido.status);
+  /**
+   * A mensagem muda com o estado: marcou "separado", o próximo toque aqui já
+   * manda "tá separado". O link do pedido vai junto — é assim que ele chega no
+   * cliente, já que a loja não manda email.
+   *
+   * Aço e não ouro: ouro em bloco é a ação que muda o pedido. Avisar é recado.
+   */
+  const whats = linkWhatsApp(pedido, site);
+
   const metodo = pedido.metodo_pagamento
     ? (METODOS[pedido.metodo_pagamento] ?? pedido.metodo_pagamento)
     : null;
@@ -164,6 +174,17 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
           </p>
         )}
       </div>
+
+      {whats && (
+        <a
+          href={whats}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="skew-brand mt-5 inline-block bg-steel px-4 py-3 font-display text-sm font-black tracking-tight uppercase text-paper transition-colors hover:text-gold"
+        >
+          <span className="unskew">Avisar no WhatsApp</span>
+        </a>
+      )}
 
       {acoes.length > 0 && (
         <div className="mt-5 flex flex-wrap gap-2.5">

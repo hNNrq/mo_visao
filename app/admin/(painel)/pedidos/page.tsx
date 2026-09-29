@@ -3,6 +3,7 @@ import { Cabecalho } from "@/componentes/admin/Cabecalho";
 import { SemAcesso } from "@/componentes/admin/SemAcesso";
 import { ListaPedidos } from "@/componentes/admin/ListaPedidos";
 import { Vazio } from "@/componentes/admin/Vazio";
+import { urlDoSite } from "@/lib/mercadopago";
 import type { Pedido, PedidoItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ export default async function PaginaPedidos() {
           texto="Quando alguém comprar e o pagamento for confirmado, o pedido aparece aqui com o contato e o endereço."
         />
       ) : (
-        <ListaPedidos pedidos={pedidos} />
+        <ListaPedidos pedidos={pedidos} site={urlDoSite()} />
       )}
     </div>
   );

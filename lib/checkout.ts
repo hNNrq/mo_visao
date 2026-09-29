@@ -29,6 +29,7 @@ export type PedidoPublico = {
   total_centavos: number;
   mp_checkout_url: string | null;
   precisa_estorno: boolean;
+  pago_em: string | null;
   expira_em: string;
   created_at: string;
   itens: { nome_snapshot: string; preco_snapshot_centavos: number; quantidade: number }[];
@@ -36,7 +37,7 @@ export type PedidoPublico = {
 
 const SELECT_PUBLICO = `id, numero, status, cliente_nome, entrega_tipo, pagamento_escolhido,
   subtotal_centavos, frete_centavos, desconto_centavos, total_centavos,
-  mp_checkout_url, precisa_estorno, expira_em, created_at,
+  mp_checkout_url, precisa_estorno, pago_em, expira_em, created_at,
   itens:pedido_itens ( nome_snapshot, preco_snapshot_centavos, quantidade )`;
 
 export async function lerPedidoPublico(id: string): Promise<PedidoPublico | null> {

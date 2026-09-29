@@ -21,8 +21,15 @@ const Entrada = z
     email: z.string().trim().email("Esse email não parece certo.").max(160),
     telefone: z
       .string()
-      .transform((t) => t.replace(/\D/g, ""))
-      .pipe(z.string().min(10, "Coloca o WhatsApp com DDD.").max(13, "Confere o número.")),
+      // só DDD + número (10 ou 11 dígitos). O 55 do país sai se vier junto: é
+      // o formato que a busca de pedido e o botão de WhatsApp do painel esperam
+      .transform((t) => t.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, ""))
+      .pipe(
+        z
+          .string()
+          .min(10, "Coloca o WhatsApp com DDD.")
+          .max(11, "Confere o número: DDD + número, sem o 55."),
+      ),
     entrega: z.enum(["retirada", "local"]),
     endereco: z.string().trim().max(300).optional().default(""),
     observacao: z.string().trim().max(300).optional().default(""),
@@ -164,4 +171,40 @@ export async function conferirCarrinho(ids: string[]) {
 export async function buscarMeusPedidos(ids: string[]): Promise<PedidoPublico[]> {
   if (!Array.isArray(ids)) return [];
   return lerPedidosPublicos(ids.filter((x) => typeof x === "string"));
+}
+
+/**
+ * Acha o pedido de quem comprou em outro aparelho ou perdeu o link.
+ *
+ * Pede os DOIS: número e WhatsApp. O número sozinho é sequencial (MV-00001,
+ * MV-00002…) e se adivinha; o telefone é o que só o comprador sabe. Resposta
+ * igual pra "não existe" e "telefone não bate", pra não confirmar a quem chuta
+ * que um número de pedido existe. Devolve só o id — a página do pedido já
+ * mostra o resumo sem endereço nem contato.
+ */
+export async function acharPedido(
+  numeroDigitado: string,
+  telefoneDigitado: string,
+): Promise<{ ok: true; id: string } | { ok: false; erro: string }> {
+  const naoAchou = {
+    ok: false as const,
+    erro: "Não achei pedido com esse número e esse WhatsApp. Confere os dois.",
+  };
+
+  const digitos = String(numeroDigitado ?? "").replace(/\D/g, "");
+  const telefone = String(telefoneDigitado ?? "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+  if (!digitos || digitos.length > 7 || telefone.length < 10 || telefone.length > 11) return naoAchou;
+
+  const numero = `MV-${digitos.padStart(5, "0")}`;
+  const { data } = await criarClienteAdmin()
+    .from("pedidos")
+    .select("id, cliente_telefone")
+    .eq("numero", numero)
+    .maybeSingle();
+
+  if (!data) return naoAchou;
+  const salvo = String(data.cliente_telefone).replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+  if (salvo !== telefone) return naoAchou;
+
+  return { ok: true, id: data.id as string };
 }
