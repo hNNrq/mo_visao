@@ -114,6 +114,8 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
   function enviar(form: FormData) {
     setErro(null);
     iniciar(async () => {
+      // se a ação estourar no servidor (500), a promise rejeita e nada mais
+      // acontece — sem este catch a pessoa fica olhando o botão sem resposta
       const r = await fecharPedido({
         nome: String(form.get("nome") ?? ""),
         email: String(form.get("email") ?? ""),
@@ -123,7 +125,11 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
         observacao: String(form.get("observacao") ?? ""),
         pagamento,
         itens: itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
-      });
+      }).catch(() => ({
+        ok: false as const,
+        erro: "Não deu pra fechar o pedido agora. Tenta de novo em instantes — nada foi cobrado.",
+        campo: undefined,
+      }));
 
       if (!r.ok) {
         setErro({ texto: r.erro, campo: r.campo });
