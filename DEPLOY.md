@@ -278,8 +278,6 @@ número ao lado de cada preço.
   desligado.
 - **Variáveis do email de venda** (seção 2.4). O código está no ar; falta o
   Gmail que envia e o email do dono.
-- **WhatsApp da loja.** A config ainda tem o número de exemplo
-  (`5500000000000`) — trocar em /admin/config.
 - **Domínio.** O site está em `mo-visao.netlify.app`. Domínio próprio é
   registrado no Registro.br e apontado depois, em Domain management.
 
