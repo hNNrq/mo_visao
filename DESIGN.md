@@ -432,10 +432,10 @@ comum: tem Ó e Ã desenhados, e por isso acabou com o par Archivo + Vandalust, 
 o til pousado por CSS e com o par `aria-hidden`/`sr-only` que consertava o nome
 pro leitor de tela.
 
-🔴 **A Vandalust (`--font-graffiti`) está ÓRFÃ e é de licença proibida.** "Free
-for personal use", sem uso comercial sem licença paga. Enquanto montava o "VISÃO"
-do nome, era o lugar mais exposto possível pra uma face com essa restrição. Ver
-`app/fontes/LEIA-ME.md` antes de reintroduzir em qualquer lugar que venda.
+🔴 **A Vandalust saiu do repositório em out/2026.** "Free for personal use", sem
+uso comercial sem licença paga — e mesmo órfã ela ia pro ar: registrada no
+`layout.tsx`, o `.ttf` entrava no CSS de produção. Ver `app/fontes/LEIA-ME.md`
+antes de trazer de volta pra qualquer coisa que venda.
 
 **Character:** Archivo 900 em caixa alta é letreiro de folha: bloco sólido,
 altura de maiúscula constante. Barlow Condensed é a nota de margem — lisa,
@@ -743,8 +743,7 @@ As peças são `public/trio-esq.jpg`, `trio-meio.jpg` e `trio-dir.jpg`, saídas 
 
 **A composição anterior** (nome empilhado, Juliet recortada pousada entre as duas
 linhas, mordida assimétrica pra não comer o til do Ã) saiu inteira. O recorte
-`public/hero-juliet.png` e o `npm run preparar-juliet` seguem no repo, mas
-**nenhum componente os usa**.
+(`public/hero-juliet.png`, `npm run preparar-juliet`) saiu do repo em out/2026.
 
 ### O Índice (componente de assinatura)
 Titulado **"Os mais falados"** na página — a estrutura é de índice, a etiqueta é

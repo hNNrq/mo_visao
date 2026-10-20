@@ -1,6 +1,7 @@
 import "server-only";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { buscarPagamento } from "@/lib/mercadopago";
+import { avisarDonoDeVenda } from "@/lib/aviso-dono";
 import type { EntregaTipo, PedidoStatus, ResultadoConfirmacao } from "@/lib/types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -135,5 +136,6 @@ export async function sincronizarPagamento(
       `[checkout] pedido ${pedidoId} pago depois de expirar e sem peça — precisa estorno`,
     );
   }
+  await avisarDonoDeVenda(pedidoId, resultado);
   return resultado;
 }

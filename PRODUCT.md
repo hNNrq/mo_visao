@@ -92,9 +92,9 @@ corrida e rua, e passou a puxar pra rua.
     set/2026 e escolheu seguir — fica registrado como risco aceito, não como
     ponto resolvido. Substituir por foto de cliente real com autorização escrita
     é o caminho que fecha isso e ainda vira prova social.
-- **Foto de produto solta:** `public/hero-juliet-original.png` → recorte com alfa
-  em `public/hero-juliet.png` (`npm run preparar-juliet`). Era a hero até
-  set/2026; hoje **nenhum componente usa**.
+- **Foto de produto solta:** o recorte da Juliet foi a hero até set/2026 e saiu
+  do repo em out/2026. O `scripts/preparar-recorte.js` continua, pra recortar
+  foto de produto.
 - **Peças de Instagram já publicadas:** `../conteudo/` (carrosséis e legendas).
 - **Referência visual dada pelo Henrique:** thugnine.com.br (streetwear BR), mais
   imagens de brand kit da Oakley em `../referencias/`.

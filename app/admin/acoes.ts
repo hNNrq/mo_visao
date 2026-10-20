@@ -339,7 +339,7 @@ export async function salvarConfig(
       // campos numéricos viram número; o resto vira string JSON
       // o dono digita reais ("15,90"); o banco guarda centavos
       if (chave.endsWith("_reais")) {
-        const reais = Number(texto.replace(/./g, "").replace(",", ".") || 0);
+        const reais = Number(texto.replace(/\./g, "").replace(",", ".") || 0);
         const centavos = Number.isFinite(reais) ? Math.max(0, Math.round(reais * 100)) : 0;
         const { error } = await supabase
           .from("config")

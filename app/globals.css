@@ -49,10 +49,6 @@
      `app/layout.tsx`. */
   --font-marca: var(--font-marca-face), var(--font-cartaz), "Arial Narrow",
     system-ui, sans-serif;
-  /* ⚠️ a face de graffiti — ÓRFÃ desde set/2026, quando a Clash tomou o nome da
-     loja. Nenhum componente usa. Licença proíbe uso comercial: ver
-     app/fontes/LEIA-ME.md antes de reintroduzir. */
-  --font-graffiti: var(--font-mao), var(--font-cartaz), "Arial Black", sans-serif;
   /* a face do DADO — chamada, cota, preço, quantidade. Ver app/layout.tsx. */
   --font-mono: var(--font-dado), ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -419,39 +415,3 @@ body {
   animation: fagulha var(--tempo) ease-in-out var(--atraso) infinite;
 }
 
-/* ==========================================================
-   O TIL DO Ã — posicionado à mão.
-
-   ⚠️ **ÓRFÃO desde set/2026.** Ele existia pro "VISÃO" em Vandalust; a Clash
-   Display tem Ã desenhado e o nome da loja voltou a ser texto comum. Fica aqui
-   porque a Vandalust pode voltar em peça interna — e porque a explicação abaixo
-   é o que impede alguém de tentar o Ã direto na face e achar que "só não
-   funcionou".
-
-   A Vandalust tem 125 glifos e nenhum latino acentuado: não existe Ã nela. O
-   Chrome decompõe o Ã em A + U+0303 e encontra o til na própria face, mas o
-   GDEF da fonte não marca esse til como MARCA — ele entra como glifo de avanço
-   normal e pousa depois do A, em cima do O. "MÓ VISÃO" saía "VISAÕ", que é a
-   mesma classe de erro do clip-path que já comeu o til uma vez neste projeto.
-
-   Então o til sai do fluxo e é pousado por cima do A. As medidas são todas em
-   `em`, o que faz a posição acompanhar o `clamp()` da manchete de 320px a
-   1600px sem nenhum ponto de quebra escrito à mão.
-
-   ⚠️ Fonte nova exige REMEDIR estes três valores. Eles são desta face e deste
-   desenho do A, não de um Ã genérico.
-   ========================================================== */
-
-@utility til {
-  position: absolute;
-  /* centrado na barriga do A, não na caixa: o A da Vandalust é inclinado e o
-     centro ótico dele cai à direita do centro geométrico. */
-  left: 54%;
-  top: -0.30em;
-  transform: translateX(-50%);
-  /* o til da face é estreito pro corpo do A; 1.15 devolve a proporção que um Ã
-     desenhado teria */
-  font-size: 1.15em;
-  line-height: 1;
-  pointer-events: none;
-}

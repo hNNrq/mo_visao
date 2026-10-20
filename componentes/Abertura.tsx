@@ -79,7 +79,7 @@ import { DURACAO_NOME } from "@/lib/animacao";
  *   divisão — e com a linha dupla, que só existia porque os glifos de graffiti
  *   pintam fora da caixa de avanço e derrubavam a haste da V sobre o acento do Ó.
  * - **O til pousado por CSS** (`til`, no `globals.css`). A Clash tem Ã de
- *   verdade. A utilitária segue no CSS pra quem ainda usar a Vandalust.
+ *   verdade. A utilitária e a Vandalust saíram do repo em out/2026.
  * - 🔴 **O par `aria-hidden` + `sr-only`.** Ele existia pra consertar o nome
  *   pro leitor de tela e pra busca, que recebiam "VISAO" da montagem à mão.
  *   Agora o texto no DOM é "Mó Visão" e chega certo sem intermediário — **e é
@@ -185,13 +185,8 @@ export function Abertura() {
         ela vale o corpo do próprio nome, que é o que faz a composição aguentar
         de 320px a 1600px sem ponto de quebra escrito à mão.
 
-        🔴 **Duas linhas, e não uma.** "Mó VISÃO" em linha única não funciona:
-        as duas palavras estão em faces diferentes (a Vandalust não tem Ó, então
-        o "Mó" é obrigatoriamente Archivo), e a Vandalust é face de graffiti —
-        os glifos dela pintam FORA da caixa de avanço, de propósito, pra
-        entrelaçar. O navegador encosta as duas caixas sem sobrepor nada, e
-        mesmo assim a haste da V cai por cima do acento do Ó. Empilhado o
-        problema não existe, e é o mesmo par de faces que a marca já usava.
+        Uma linha só, em Clash Display: as duas linhas de antes eram do par
+        Archivo + Vandalust, que saiu (ver o cabeçalho deste arquivo).
       */}
       <div className="relative z-10 text-center">
         <BlurIn

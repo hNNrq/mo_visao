@@ -63,44 +63,6 @@ const pe = localFont({
 });
 
 /**
- * A MÃO — a face de graffiti.
- *
- * ⚠️ **Hoje ela não entra em lugar nenhum.** Montava o "VISÃO" da abertura até
- * set/2026, quando a Clash Display (`marca`, abaixo) tomou o nome da loja
- * inteiro. O token `--font-graffiti` continua no `globals.css` e nenhum
- * componente o usa. Ela fica registrada aqui porque a face pode voltar em peça
- * de Instagram ou em página interna — e porque a ressalva abaixo precisa
- * continuar visível pra quem for tentar isso.
- *
- * 🔴 **ESTA FONTE NÃO PODE IR PRO AR COMERCIALMENTE.** Vandalust Graffiti, do
- * Cikareotype Studio, é "free for personal use" — o autor proíbe uso comercial
- * sem licença paga (cikareotype.com/license). Enquanto ela esteve no nome da
- * loja, esse era o lugar mais exposto possível pra uma fonte com essa restrição;
- * a troca pela Clash tirou a abertura de baixo do problema. Se a face voltar
- * pra qualquer coisa que venda, a licença tem que ser comprada ANTES. Está
- * registrado em `app/fontes/LEIA-ME.md`.
- *
- * ⚠️ **O arquivo fica NO REPOSITÓRIO, e isso não é descuido.** A Hard Zone, a
- * face de graffiti anterior, ficava no `.gitignore`: o localhost mostrava uma
- * fonte que o deploy nunca mostraria, e o bug só aparecia em produção. Fonte que
- * o build precisa não pode depender de um arquivo que só existe nesta máquina.
- *
- * 🔴 **A fonte NÃO TEM Ã, e por isso "VISÃO" é montado à mão.** São 125 glifos,
- * sem nenhum latino acentuado. O Chrome decompõe o Ã em A + til combinante e
- * acha o til na própria face — só que o GDEF dela não classifica esse til como
- * marca, então ele ganha avanço próprio e pousa em cima do O: sai "VISAÕ". O til
- * é posicionado por CSS em `componentes/Abertura.tsx`. Ver o cabeçalho de lá.
- */
-const mao = localFont({
-  src: "./fontes/vandalust.ttf",
-  variable: "--font-mao",
-  display: "swap",
-  // Sem fallback de graffiti possível: se ela não chegar, a linha cai na face de
-  // display do site, que é a Archivo — feio, mas legível e com o Ã certo.
-  fallback: ["var(--font-cartaz)", "Arial Black", "sans-serif"],
-});
-
-/**
  * A MARCA — a face do nome da loja na abertura.
  *
  * Clash Display 700, do Indian Type Foundry (Fontshare). Entrou em set/2026 a
@@ -111,9 +73,8 @@ const mao = localFont({
  *
  * 1. 🔴 **Tirou a única fonte de licença proibida de cima do nome da loja.** A
  *    Vandalust é "free for personal use" e o nome da marca era o lugar mais
- *    exposto em que ela aparecia. Ver a nota da `mao` acima: aquela ressalva
- *    continua valendo pra onde a face ainda for usada, mas a abertura saiu de
- *    baixo dela.
+ *    exposto em que ela aparecia. O arquivo saiu do repositório em out/2026 —
+ *    ver `app/fontes/LEIA-ME.md`.
  * 2. **Tem os acentos.** Ó, Ã, Á, À, Â, Ç, É, Ê, Í, Õ, Ú — todos desenhados. É o
  *    oposto da Vandalust, que não tem glifo acentuado nenhum e obrigava o til do
  *    Ã a ser pousado por CSS. Com ela "MÓ VISÃO" é texto, não montagem.
@@ -193,7 +154,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${cartaz.variable} ${pe.variable} ${dado.variable} ${mao.variable} ${marca.variable}`}
+      className={`${cartaz.variable} ${pe.variable} ${dado.variable} ${marca.variable}`}
     >
       <body>{children}</body>
     </html>

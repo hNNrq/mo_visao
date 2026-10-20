@@ -4,16 +4,17 @@ Passo a passo do primeiro deploy. A ordem importa: o Supabase vem antes,
 porque a Netlify precisa das chaves dele pra buildar.
 
 Repositório: https://github.com/hNNrq/mo_visao
+No ar: https://mo-visao.netlify.app
 
 ---
 
 ## Antes de começar
 
-**As contas nascem no nome do dono** (Supabase, Netlify, domínio), com o
-Henrique como colaborador. É o que permite entregar a loja e sair sem
-sequestrar nada. Se pra essa demo for mais rápido criar na conta da
-Norman.dgt, tudo bem — mas anota que vai ter que migrar, e migrar projeto do
-Supabase significa recriar o banco e reconfigurar as chaves.
+**Supabase e Netlify ficam na conta do Henrique** (decidido em out/2026): quem
+mexe no site é sempre ele, então não tem transferência na entrega.
+
+**O que continua no nome do dono, sem exceção: o Mercado Pago.** O dinheiro cai
+direto na conta dele e nunca passa pela Norman.dgt.
 
 ---
 
@@ -143,13 +144,27 @@ trocar a URL do Supabase depois, tem que **redeployar** (Deploys > Trigger
 deploy > *Clear cache and deploy*), não basta salvar a variável. Sem isso as
 fotos de produto param de carregar sem erro visível.
 
-### 2.4 Conta no nome do dono
+### 2.4 Email de venda nova pro dono
 
-O ideal é o projeto nascer no time da Netlify do dono. Se for mais rápido
-construir no time da Norman.dgt, na entrega o projeto é **transferido** pro time
-dele (Project configuration > General > *Transfer project*) — transferir
-mantém o site, as variáveis e o domínio. Não tem banco pra recriar, como no
-Supabase.
+`lib/aviso-dono.ts` manda um email quando um pedido é confirmado como pago (e
+outro, de "estornar", quando o pagamento entra depois de a peça ter saído). Sem
+as variáveis abaixo o site funciona igual e só não manda o email.
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=<gmail que envia>
+SMTP_PASS=<SENHA DE APP do Google, não a senha da conta>
+AVISO_EMAIL_PARA=<email do dono>
+```
+
+A senha de app sai em myaccount.google.com/apppasswords e exige verificação em
+duas etapas ligada na conta que envia. Com domínio próprio, dá pra trocar pro
+Resend só mudando as variáveis (`smtp.resend.com`, usuário `resend`, senha = API
+key, `EMAIL_DE=pedidos@<dominio>`) — o código é o mesmo.
+
+O destinatário fica em variável de ambiente, e não em /admin/config, porque a
+tabela `config` é legível pela chave pública.
 
 ---
 
@@ -261,10 +276,12 @@ número ao lado de cada preço.
 - **Chaves do Mercado Pago.** O checkout está construído e testado até a porta do
   Mercado Pago; falta a conta do dono (seção 4). Até lá o botão de pagar fica
   desligado.
-- **Email de pedido novo pro dono.** Hoje ele vê o pedido no painel e recebe o
-  aviso de venda do próprio app do Mercado Pago.
-- **Domínio.** O site sobe no endereço `*.netlify.app`. O domínio é registrado
-  no Registro.br **no CPF do dono** e apontado depois, em Domain management.
+- **Variáveis do email de venda** (seção 2.4). O código está no ar; falta o
+  Gmail que envia e o email do dono.
+- **WhatsApp da loja.** A config ainda tem o número de exemplo
+  (`5500000000000`) — trocar em /admin/config.
+- **Domínio.** O site está em `mo-visao.netlify.app`. Domínio próprio é
+  registrado no Registro.br e apontado depois, em Domain management.
 
 As fontes estão todas auto-hospedadas em `app/fontes/` e liberadas pra uso
 comercial — ver o `LEIA-ME.md` de lá. A `hard-zone-demo.ttf` saiu de `public/`

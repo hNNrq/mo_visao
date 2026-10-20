@@ -26,21 +26,18 @@ de CDN — o caminho é: baixar o `.woff2`, salvar aqui, registrar em
 | `barlow-condensed-400-latin.woff2`<br>`barlow-condensed-500-latin.woff2` | Barlow Condensed | corpo e letra miúda, `--font-sans` | SIL OFL 1.1 | ✅ livre |
 | `azeret-mono-latin-var.woff2` | Azeret Mono (variável 400–700) | dado: chamada, cota, preço, `--font-mono` | SIL OFL 1.1 | ✅ livre |
 | `clash-display-700.woff2` | Clash Display 700 | **o nome da loja na abertura**, `--font-marca` | ITF Free Font License | ✅ livre |
-| `vandalust.ttf` | Vandalust Graffiti | **nada, hoje** — `--font-graffiti` está órfã | Cikareotype Studio | 🔴 **PROIBIDO** |
 
-## 🔴 A Vandalust
+## 🔴 A Vandalust saiu (out/2026)
 
 Vandalust Graffiti, do Cikareotype Studio, é **free for personal use**. O autor
-proíbe uso comercial sem licença paga (cikareotype.com/license).
+proíbe uso comercial sem licença paga (cikareotype.com/license). Ela montava o
+"VISÃO" do nome da loja até set/2026, e a Clash Display tomou o lugar.
 
-Ela montava o "VISÃO" do nome da loja até set/2026 — que era o lugar mais exposto
-possível pra uma fonte com essa restrição. **A Clash Display tomou o lugar dela e
-a abertura saiu de baixo do problema.** Hoje `--font-graffiti` não é usada por
-nenhum componente.
-
-O arquivo continua aqui de propósito, porque a face pode voltar em peça de
-Instagram ou em página interna. Se voltar **pra qualquer coisa que venda**, a
-licença tem que ser comprada ANTES.
+Ficou registrada no `layout.tsx` "pra poder voltar" — e isso bastava pra ela ir
+pro ar: `localFont` emite o `@font-face` de toda face registrada, usada ou não,
+e o `.ttf` aparecia no CSS de produção. Em out/2026 saíram o arquivo, o registro,
+o token `--font-graffiti` e a utilitária `til`. **Se ela voltar pra qualquer
+coisa que venda, a licença tem que ser comprada ANTES.**
 
 ## Por que a Clash Display é a exceção à "uma fonte de manchete só"
 
@@ -53,7 +50,7 @@ Ela também resolveu dois defeitos de uma vez:
 
 - **Tem os acentos.** Ó, Ã, Á, À, Â, Ç, É, Ê, Í, Õ, Ú desenhados. A Vandalust não
   tem glifo acentuado nenhum, e por isso o til do Ã precisava ser pousado por CSS
-  (a utilitária `til`, no `globals.css`) e o "Mó" precisava sair em Archivo.
+  (a utilitária `til`, que já saiu) e o "Mó" precisava sair em Archivo.
 - **Cabe numa linha.** O nome era empilhado em duas porque as duas palavras
   estavam em faces diferentes e os glifos de graffiti pintam fora da caixa de
   avanço, derrubando a haste da V sobre o acento do Ó.
