@@ -186,9 +186,12 @@ Já feito, não precisa refazer:
   `npm run demo -- --confirmar` (ver seção 3). São de exemplo: o dono apaga ou
   edita pelo painel quando cadastrar o estoque de verdade
 
-Falta: **o login do dono**. Hoje o único admin é o do Henrique. Antes de
-entregar, criar o usuário dele em Authentication e inserir na tabela `admins`
-do mesmo jeito.
+- login do dono criado e inserido em `admins` (nome "Mó Visão")
+- **Mercado Pago em PRODUÇÃO desde 11/11/2026**, com a conta do dono: token e
+  segredo do webhook na Netlify, formas de pagamento ajustadas na conta. Compra
+  real de Pix (MV-00019, R$ 1,90) confirmada pelo webhook em 14 segundos.
+  Aviso sem assinatura válida conferido de fora: volta 401
+- parcelas sem juros em /admin/config: **2** — tem que bater com a conta do MP
 
 ---
 
@@ -273,9 +276,8 @@ número ao lado de cada preço.
 
 ## O que ainda NÃO está no ar
 
-- **Chaves do Mercado Pago.** O checkout está construído e testado até a porta do
-  Mercado Pago; falta a conta do dono (seção 4). Até lá o botão de pagar fica
-  desligado.
+- **O "produto teste" de R$ 2** ainda está ativo na vitrine. Desligar ou apagar
+  pelo painel antes de divulgar, junto com os três óculos de demonstração.
 - **Variáveis do email de venda** (seção 2.4). O código está no ar; falta o
   Gmail que envia e o email do dono.
 - **Domínio.** O site está em `mo-visao.netlify.app`. Domínio próprio é
