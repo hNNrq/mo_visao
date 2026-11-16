@@ -95,7 +95,7 @@ export default async function PaginaProduto({ params }: Props) {
             </p>
             {parcelas && (
               <p className="numeros mt-3 font-sans text-lg text-smoke">
-                ou {parcelas.parcelas}x de {parcelas.valor}
+                ou {parcelas.parcelas}x de {parcelas.valor} sem juros
               </p>
             )}
           </div>

@@ -40,8 +40,9 @@ corrida e rua, e passou a puxar pra rua.
   story — não de uma busca com intenção de compra madura.
 - O dono atende hoje pelo direct. O site existe pra substituir essa conversa,
   não pra complementá-la.
-- Entrega assumida como **retirada combinada ou entrega na região**. Envio pro
-  Brasil todo é fase posterior.
+- Entrega: **Correios pro Brasil todo** (PAC/SEDEX, frete pela distância,
+  cotado no Melhor Envio) ou **retirada combinada**. Decisão do dono, out/2026.
+  Parcelamento: até 2x sem juros, acima disso juros do comprador.
 - Custo fixo da operação é ~R$ 40/ano de domínio mais a taxa por venda. Não há
   orçamento de manutenção.
 

@@ -58,7 +58,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
         <input
           name="banner_topo"
           defaultValue={v("banner_topo")}
-          placeholder="Frete grátis na região"
+          placeholder="Enviamos pro Brasil todo"
           className={campo}
         />
         <span className={dica}>
@@ -82,17 +82,18 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
       </label>
 
       <label className="flex flex-col gap-2">
-        <span className={rotulo}>Taxa de entrega na região (R$)</span>
+        <span className={rotulo}>CEP de onde sai o envio</span>
         <input
-          name="frete_local_centavos"
-          inputMode="decimal"
-          defaultValue={reais("frete_local_centavos")}
-          placeholder="0,00"
+          name="cep_origem"
+          inputMode="numeric"
+          defaultValue={v("cep_origem")}
+          placeholder="00000-000"
+          maxLength={9}
           className={`${campo} numeros`}
         />
         <span className={dica}>
-          Somada ao total quando o cliente escolhe entrega. Deixe 0 pra entregar
-          de graça. Retirada nunca paga.
+          O frete dos Correios é calculado daqui até o CEP do cliente. Sem ele, a
+          loja não consegue cotar o envio.
         </span>
       </label>
 
@@ -106,7 +107,8 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           className={`${campo} numeros`}
         />
         <span className={dica}>
-          Compra desse valor pra cima não paga a taxa. Deixe 0 pra não usar.
+          Compra desse valor pra cima não paga frete — e o frete dos Correios
+          sai do teu bolso. Deixe 0 pra não usar.
         </span>
       </label>
 
@@ -116,7 +118,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           name="entrega_texto"
           rows={3}
           defaultValue={v("entrega_texto")}
-          placeholder="Retirada combinada ou entrega na região."
+          placeholder="Enviamos pelos Correios pro Brasil todo, ou dá pra combinar a retirada."
           className={campo}
         />
         <span className={dica}>

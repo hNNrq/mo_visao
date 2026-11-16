@@ -117,7 +117,7 @@ export default async function Home() {
                     {precoBRL(precos.minimo)}
                     {parcelas && (
                       <span className="ml-3 text-[1.09375rem] font-normal text-smoke">
-                        ou {parcelas.parcelas}x de {parcelas.valor}
+                        ou {parcelas.parcelas}x de {parcelas.valor} sem juros
                       </span>
                     )}
                   </span>

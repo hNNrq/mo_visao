@@ -4,6 +4,7 @@ import { z } from "zod";
 import { criarClientePublico, urlFoto } from "@/lib/supabase/publico";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { criarPreferencia } from "@/lib/mercadopago";
+import { buscarEndereco, cotarCorreios, limparCep, type Endereco, type OpcaoFrete } from "@/lib/frete";
 
 /**
  * Ações do carrinho.
@@ -62,6 +63,80 @@ export async function conferirCarrinho(ids: string[]): Promise<LinhaCarrinho[] |
   });
 }
 
+const esquemaItens = z
+  .array(z.object({ produto_id: uuid, quantidade: z.number().int().min(1).max(10) }))
+  .min(1, "Teu carrinho está vazio.")
+  .max(20);
+
+const esquemaCep = z
+  .string()
+  .transform(limparCep)
+  .refine((c) => c.length === 8, "Confere o CEP, são 8 números.");
+
+/**
+ * Cota o frete dos itens pro CEP. Preço declarado de cada peça sai do banco.
+ * Usado pela tela (pra mostrar as opções) e pelo fechamento (pra valer).
+ */
+async function cotarItens(cep: string, itens: z.infer<typeof esquemaItens>): Promise<OpcaoFrete[]> {
+  const supabase = criarClienteAdmin();
+  const [{ data: produtos }, { data: origem }] = await Promise.all([
+    supabase.from("produtos").select("id, preco_centavos").in("id", itens.map((i) => i.produto_id)),
+    supabase.from("config").select("valor").eq("chave", "cep_origem").maybeSingle(),
+  ]);
+  const preco = Object.fromEntries((produtos ?? []).map((p) => [p.id, p.preco_centavos as number]));
+
+  return cotarCorreios({
+    cepOrigem: String(origem?.valor ?? ""),
+    cepDestino: cep,
+    itens: itens.map((i) => ({
+      id: i.produto_id,
+      quantidade: i.quantidade,
+      precoCentavos: preco[i.produto_id] ?? 0,
+    })),
+  });
+}
+
+function erroDeFrete(e: unknown): string {
+  if (e instanceof Error && e.message === "FRETE_SEM_CONFIG") {
+    console.error("[frete] falta MELHORENVIO_TOKEN ou cep_origem no painel");
+    return "O envio pelos Correios está fora agora. Dá pra escolher retirada ou chamar no WhatsApp.";
+  }
+  console.error("[frete]", e);
+  return "Não deu pra calcular o frete agora. Tenta de novo em instantes.";
+}
+
+export type ResultadoFrete =
+  | { ok: true; opcoes: OpcaoFrete[]; endereco: Endereco | null }
+  | { ok: false; erro: string };
+
+export async function cotarFrete(cepBruto: string, itensBrutos: unknown): Promise<ResultadoFrete> {
+  const cep = esquemaCep.safeParse(cepBruto);
+  if (!cep.success) return { ok: false, erro: cep.error.issues[0].message };
+  const itens = esquemaItens.safeParse(itensBrutos);
+  if (!itens.success) return { ok: false, erro: "Teu carrinho está vazio." };
+
+  const [cotacao, endereco] = await Promise.allSettled([
+    cotarItens(cep.data, itens.data),
+    buscarEndereco(cep.data),
+  ]);
+
+  if (endereco.status === "fulfilled" && endereco.value === null) {
+    return { ok: false, erro: "Esse CEP não existe. Confere os números." };
+  }
+  if (cotacao.status === "rejected") return { ok: false, erro: erroDeFrete(cotacao.reason) };
+  if (cotacao.value.length === 0) {
+    return { ok: false, erro: "Os Correios não entregam nesse CEP agora. Chama no WhatsApp que a gente resolve." };
+  }
+
+  return {
+    ok: true,
+    opcoes: cotacao.value,
+    endereco: endereco.status === "fulfilled" ? endereco.value : null,
+  };
+}
+
+const texto = (max: number) => z.string().trim().max(max).optional();
+
 const esquemaPedido = z
   .object({
     nome: z.string().trim().min(3, "Escreve teu nome completo.").max(120),
@@ -70,17 +145,29 @@ const esquemaPedido = z
       .transform((t) => t.replace(/\D/g, ""))
       .refine((t) => t.length >= 10 && t.length <= 13, "Confere o WhatsApp, com DDD."),
     email: z.string().trim().toLowerCase().email("Confere o email."),
-    entrega_tipo: z.enum(["retirada", "local"]),
-    endereco: z.string().trim().max(300).optional(),
-    observacao: z.string().trim().max(300).optional(),
-    itens: z
-      .array(z.object({ produto_id: uuid, quantidade: z.number().int().min(1).max(10) }))
-      .min(1, "Teu carrinho está vazio.")
-      .max(20),
+    entrega_tipo: z.enum(["retirada", "correios"]),
+    observacao: texto(300),
+    correios: z
+      .object({
+        cep: esquemaCep,
+        servico: z.number().int(),
+        rua: z.string().trim().min(2, "Escreve a rua.").max(160),
+        numero: z.string().trim().min(1, "Escreve o número (ou S/N).").max(20),
+        complemento: texto(80),
+        bairro: z.string().trim().min(2, "Escreve o bairro.").max(100),
+        cidade: z.string().trim().min(2, "Escreve a cidade.").max(100),
+        uf: z
+          .string()
+          .trim()
+          .toUpperCase()
+          .refine((u) => /^[A-Z]{2}$/.test(u), "Confere o estado (UF), tipo MG."),
+      })
+      .optional(),
+    itens: esquemaItens,
   })
-  .refine((d) => d.entrega_tipo !== "local" || (d.endereco?.length ?? 0) >= 8, {
-    message: "Escreve o endereço da entrega, com número e bairro.",
-    path: ["endereco"],
+  .refine((d) => d.entrega_tipo !== "correios" || d.correios, {
+    message: "Calcula o frete com teu CEP pra seguir.",
+    path: ["correios"],
   });
 
 export type EntradaPedido = z.input<typeof esquemaPedido>;
@@ -97,16 +184,40 @@ export async function fecharPedido(entrada: EntradaPedido): Promise<ResultadoFec
   const d = dados.data;
   const supabase = criarClienteAdmin();
 
+  // 0. frete: recotado aqui. O preço que a tela mostrou não vale — pode ter
+  // vencido, e pode ter sido editado
+  let frete: OpcaoFrete | null = null;
+  let entrega: Record<string, unknown> = {};
+  if (d.entrega_tipo === "correios" && d.correios) {
+    const c = d.correios;
+    try {
+      frete = (await cotarItens(c.cep, d.itens)).find((o) => o.servico === c.servico) ?? null;
+    } catch (e) {
+      return { ok: false, erro: erroDeFrete(e) };
+    }
+    if (!frete) return { ok: false, erro: "Esse frete mudou. Calcula de novo com teu CEP." };
+
+    const cepFormatado = `${c.cep.slice(0, 5)}-${c.cep.slice(5)}`;
+    entrega = {
+      ...c,
+      servico: frete.nome,
+      prazo_dias: frete.prazoDias,
+      // linha pronta pra quem só exibe (pedido, painel, email)
+      endereco:
+        `${c.rua}, ${c.numero}${c.complemento ? `, ${c.complemento}` : ""} — ` +
+        `${c.bairro}, ${c.cidade}/${c.uf} — CEP ${cepFormatado}`,
+    };
+  }
+  if (d.observacao) entrega.observacao = d.observacao;
+
   // 1. pedido + reserva, numa transação só, dentro do banco
   const { data: criado, error } = await supabase
     .rpc("criar_pedido", {
       p_cliente: { nome: d.nome, email: d.email, telefone: d.telefone },
       p_entrega_tipo: d.entrega_tipo,
-      p_entrega: {
-        ...(d.entrega_tipo === "local" ? { endereco: d.endereco } : {}),
-        ...(d.observacao ? { observacao: d.observacao } : {}),
-      },
+      p_entrega: entrega,
       p_itens: d.itens,
+      p_frete_centavos: frete?.precoCentavos ?? null,
     })
     .single<{ id: string; numero: string; token: string; total_centavos: number; expira_em: string }>();
 
@@ -144,6 +255,7 @@ export async function fecharPedido(entrada: EntradaPedido): Promise<ResultadoFec
       expiraEm: criado.expira_em,
       cliente: { nome: d.nome, email: d.email },
       freteCentavos: pedido?.frete_centavos ?? 0,
+      freteTitulo: frete ? `Frete Correios ${frete.nome}` : "Entrega",
       itens: (itens ?? []).map((i) => ({
         id: i.produto_id ?? "item",
         titulo: i.nome_snapshot,

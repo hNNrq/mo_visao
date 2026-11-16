@@ -32,6 +32,7 @@ export type DadosPreferencia = {
   cliente: { nome: string; email: string };
   itens: { id: string; titulo: string; precoCentavos: number; quantidade: number }[];
   freteCentavos: number;
+  freteTitulo: string;
 };
 
 export async function criarPreferencia(d: DadosPreferencia) {
@@ -57,7 +58,7 @@ export async function criarPreferencia(d: DadosPreferencia) {
   if (d.freteCentavos > 0) {
     itens.push({
       id: "entrega",
-      title: "Entrega na região",
+      title: d.freteTitulo,
       quantity: 1,
       unit_price: d.freteCentavos / 100,
       currency_id: "BRL",
@@ -83,8 +84,11 @@ export async function criarPreferencia(d: DadosPreferencia) {
         // Boleto leva até 3 dias pra compensar, e a peça fica reservada por
         // 30 minutos. Com poucas unidades por modelo, não fecha.
         excluded_payment_types: [{ id: "ticket" }, { id: "atm" }],
-        // casa com o "ou 6x de" da página do produto (lib/format.ts)
-        installments: 6,
+        // Até 12x; da 3ª em diante o juros é do comprador. As parcelas SEM
+        // juros (PARCELAS_SEM_JUROS, em lib/format.ts) não se configuram aqui:
+        // são ajuste da conta do dono no Mercado Pago, e os dois têm que
+        // bater, senão a vitrine promete o que o MP não dá.
+        installments: 12,
       },
       // O link de pagamento vence junto com a reserva. O Pix gerado dentro
       // dele também — sem isso, dava pra pagar horas depois de a peça voltar

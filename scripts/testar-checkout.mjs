@@ -88,15 +88,16 @@ try {
   console.log("\nTotal e entrega:");
 
   const botaoPagar = pagina.getByRole("button", { name: /^Pagar/ });
+  // Correios é o padrão; a cotação real (Melhor Envio) não roda aqui — sem ela,
+  // o botão de pagar não pode liberar
+  ok(await botaoPagar.isDisabled(), "Correios: sem calcular o frete, não dá pra pagar");
+  ok(await pagina.getByText("Calcula o frete com teu CEP").isVisible(), "e a tela diz o que falta");
+  await pagina.getByText("Retirada", { exact: true }).click();
   ok((await botaoPagar.innerText()).includes("599,00"), "retirada: total é o preço da peça", await botaoPagar.innerText());
-  await pagina.getByText("Entrega na região", { exact: true }).click();
-  ok((await botaoPagar.innerText()).includes("614,00"), "entrega na região soma a taxa do painel (R$ 15)", await botaoPagar.innerText());
-  ok(await pagina.locator('textarea[name="endereco"]').isVisible(), "entrega pede endereço");
 
   await pagina.fill('input[name="nome"]', "Ana Teste");
   await pagina.fill('input[name="telefone"]', "(11) 98888-7777");
   await pagina.fill('input[name="email"]', "Ana@Teste.com");
-  await pagina.fill('textarea[name="endereco"]', "Rua das Flores, 100, Centro");
 
   // ============================================================
   console.log("\nOutra pessoa reserva a única unidade antes:");
@@ -126,11 +127,10 @@ try {
 
   await pagina.reload({ waitUntil: "networkidle" });
   await pagina.getByText("O que você leva").waitFor();
-  await pagina.getByText("Entrega na região", { exact: true }).click();
+  await pagina.getByText("Retirada", { exact: true }).click();
   await pagina.fill('input[name="nome"]', "Ana Teste");
   await pagina.fill('input[name="telefone"]', "(11) 98888-7777");
   await pagina.fill('input[name="email"]', "Ana@Teste.com");
-  await pagina.fill('textarea[name="endereco"]', "Rua das Flores, 100, Centro");
 
   const temMP = !!process.env.MERCADOPAGO_ACCESS_TOKEN;
   if (temMP) {
@@ -231,13 +231,15 @@ try {
   ok(painel.includes("· Pix"), "a forma de pagamento aparece com nome legível (Pix)");
 
   await pagina.goto(`${SITE}/admin/config`, { waitUntil: "networkidle" });
-  ok((await pagina.inputValue('input[name="frete_local_centavos"]')) === "15,00", "taxa de entrega aparece em reais (15,00)");
-  await pagina.fill('input[name="frete_local_centavos"]', "20");
+  await pagina.fill('input[name="frete_gratis_acima_centavos"]', "20");
+  await pagina.fill('input[name="cep_origem"]', "30130-000");
   await pagina.getByRole("button", { name: "Salvar ajustes" }).click();
   await pagina.getByText("Ajustes salvos").waitFor();
-  const cfg = await um(`select valor from config where chave = 'frete_local_centavos'`);
+  const cfg = await um(`select valor from config where chave = 'frete_gratis_acima_centavos'`);
   ok(Number(cfg.valor) === 2000, "o dono digita 20 e o banco guarda 2000 centavos", JSON.stringify(cfg.valor));
-  await db.query(`update config set valor = '1500' where chave = 'frete_local_centavos'`);
+  const origem = await um(`select valor from config where chave = 'cep_origem'`);
+  ok(origem?.valor === "30130-000", "o CEP de origem fica salvo", JSON.stringify(origem?.valor));
+  await db.query(`update config set valor = '0' where chave = 'frete_gratis_acima_centavos'`);
   ok(!(await pagina.locator("main").innerText()).includes("Desconto no Pix"), "o campo de desconto no Pix saiu");
 
   // ============================================================

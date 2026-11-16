@@ -153,7 +153,7 @@ function BlocoPedido({ pedido }: { pedido: PedidoComItens }) {
           {pedido.entrega_tipo === "retirada"
             ? "Retirada"
             : pedido.entrega_tipo === "correios"
-              ? "Envio pelos Correios"
+              ? `Correios${entrega?.servico ? ` ${entrega.servico}` : ""}`
               : "Entrega na região"}
           {entrega?.endereco ? ` · ${entrega.endereco}` : ""}
         </p>

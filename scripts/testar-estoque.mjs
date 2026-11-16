@@ -61,6 +61,7 @@ try {
   await db.exec(carregar("supabase/migrations/002_funcoes.sql"));
   await db.exec(carregar("supabase/migrations/004_seed.sql"));
   await db.exec(carregar("supabase/migrations/005_checkout.sql"));
+  await db.exec(carregar("supabase/migrations/007_correios.sql"));
 } catch (e) {
   console.error("erro ao carregar as migrations:", e.message);
   process.exit(1);
@@ -181,10 +182,10 @@ const juliet = dois.find((r) => r.slug === "juliet").id;
 const penny = dois.find((r) => r.slug === "penny").id;
 const cliente = JSON.stringify({ nome: "Ana", email: "Ana@Teste.com", telefone: "11999990000" });
 
-async function criar(itensArr, tipo = "retirada", entrega = {}) {
+async function criar(itensArr, tipo = "retirada", entrega = {}, frete = null) {
   const { rows } = await db.query(
-    `select * from criar_pedido($1::jsonb, $2::entrega_tipo, $3::jsonb, $4::jsonb)`,
-    [cliente, tipo, JSON.stringify(entrega), JSON.stringify(itensArr)]
+    `select * from criar_pedido($1::jsonb, $2::entrega_tipo, $3::jsonb, $4::jsonb, $5::integer)`,
+    [cliente, tipo, JSON.stringify(entrega), JSON.stringify(itensArr), frete]
   );
   return rows[0];
 }
@@ -235,13 +236,15 @@ try {
 }
 ok(vazio, "carrinho vazio é recusado");
 
-let correios = false;
+let semFrete = false;
 try {
   await criar([{ produto_id: penny, quantidade: 1 }], "correios");
 } catch (e) {
-  correios = String(e.message).includes("ENTREGA_INDISPONIVEL");
+  semFrete = String(e.message).includes("FRETE_OBRIGATORIO");
 }
-ok(correios, "envio pelos Correios ainda não é aceito");
+ok(semFrete, "Correios sem frete cotado é recusado");
+({ rows: p } = await db.query(`select reservado from produtos where id=$1`, [penny]));
+ok(p[0].reservado === 1, "e a recusa não reserva nada", `penny reservado=${p[0].reservado}`);
 
 // frete da região, e frete grátis acima do valor
 await db.query(`update config set valor='1500'::jsonb where chave='frete_local_centavos'`);
@@ -255,6 +258,24 @@ const pedG = await criar([{ produto_id: penny, quantidade: 1 }], "local", { ende
 ok(pedG.total_centavos === 30000, "acima do valor mínimo, a entrega sai de graça", `total=${pedG.total_centavos}`);
 let { rows: stF } = await db.query(`select status from pedidos where id=$1`, [pedF.id]);
 ok(stF[0].status === "expirado", "criar_pedido expira a reserva vencida sem precisar de cron", stF[0].status);
+
+// Correios: o frete vem do servidor (cotação) e entra no total
+const { rows: [{ id: romeo }] } = await db.query(
+  `insert into produtos (slug, nome, preco_centavos, estoque) values ('romeo', 'Romeo', 20000, 5) returning id`
+);
+const pedC = await criar([{ produto_id: romeo, quantidade: 1 }], "correios", { cep: "01001000" }, 2350);
+ok(pedC.total_centavos === 22350, "Correios soma o frete cotado", `total=${pedC.total_centavos}`);
+const pedC2 = await criar([{ produto_id: romeo, quantidade: 2 }], "correios", { cep: "01001000" }, 2350);
+ok(pedC2.total_centavos === 40000, "frete grátis a partir do valor vale pros Correios", `total=${pedC2.total_centavos}`);
+let freteNegativo = false;
+try {
+  await criar([{ produto_id: romeo, quantidade: 1 }], "correios", {}, -100);
+} catch (e) {
+  freteNegativo = String(e.message).includes("FRETE_OBRIGATORIO");
+}
+ok(freteNegativo, "frete negativo é recusado");
+const pedR = await criar([{ produto_id: romeo, quantidade: 1 }], "retirada", {}, 9999);
+ok(pedR.total_centavos === 20000, "retirada ignora frete que vier junto", `total=${pedR.total_centavos}`);
 
 // ============================================================
 // pagamento atrasado num pedido de dois itens
@@ -285,7 +306,7 @@ for (const [fn, args] of [
   ["reservar_estoque", "'[]'::jsonb"],
   ["confirmar_pedido", "gen_random_uuid(), 'x', 'x'"],
   ["liberar_reservas_expiradas", ""],
-  ["criar_pedido", "'{}'::jsonb, 'retirada', '{}'::jsonb, '[]'::jsonb"],
+  ["criar_pedido", "'{}'::jsonb, 'retirada', '{}'::jsonb, '[]'::jsonb, 0"],
 ]) {
   let negado = false;
   try {

@@ -17,7 +17,6 @@ export default async function PaginaCarrinho() {
   return (
     <Carrinho
       entregaTexto={String(config.entrega_texto ?? "")}
-      freteLocalCentavos={numero("frete_local_centavos", 0)}
       freteGratisAcimaCentavos={numero("frete_gratis_acima_centavos", 0)}
       reservaMinutos={numero("reserva_minutos", 30)}
     />

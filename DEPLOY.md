@@ -39,7 +39,7 @@ Em [supabase.com/dashboard](https://supabase.com/dashboard) > **New project**.
 ### 1.2 Rodar as migrations
 
 `npx supabase db push`, ou pelo **SQL Editor** > **New query**, rodando os
-seis arquivos de `supabase/migrations/` **na ordem**, um de cada vez:
+sete arquivos de `supabase/migrations/` **na ordem**, um de cada vez:
 
 | Arquivo | O que cria |
 |---|---|
@@ -49,6 +49,7 @@ seis arquivos de `supabase/migrations/` **na ordem**, um de cada vez:
 | `004_seed.sql` | os textos editáveis do site |
 | `005_checkout.sql` | `criar_pedido()`, token do pedido, travas de permissão e o job que expira reserva |
 | `006_permissoes.sql` | o acesso de cada role da API escrito à mão (ver abaixo) |
+| `007_correios.sql` | `criar_pedido()` aceita envio pelos Correios com o frete cotado no servidor; chave `cep_origem` |
 
 Rodar fora de ordem quebra: o `003` depende das tabelas do `001` e da
 `is_admin()` do `002`, e o `005` reescreve funções do `002`.
@@ -152,10 +153,12 @@ avisa no log.
 
 ### 2.4 Parcelamento sem juros
 
-O site mostra "ou 6x de R$ X". Quem decide se é sem juros é a **conta do
-dono**, não o código: no app do Mercado Pago, **Seu negócio > Custos >
-Parcelamento sem acréscimo**, até 6x. Sem isso, o cliente vê 6x no site e 6x
-**com juros** no checkout — a promessa quebra na última tela.
+Decisão do dono (out/2026): **até 2x sem juros**, acima disso o juros é do
+comprador, até 12x. O site mostra "ou 2x de R$ X sem juros"
+(`PARCELAS_SEM_JUROS` em `lib/format.ts`). Quem decide se é sem juros é a
+**conta do dono**, não o código: no app do Mercado Pago, **Seu negócio >
+Custos > Parcelamento sem acréscimo**, até 2x. Sem isso, o cliente vê "sem
+juros" no site e juros no checkout — a promessa quebra na última tela.
 
 ### 2.5 O que o checkout não oferece, de propósito
 
@@ -164,6 +167,30 @@ Parcelamento sem acréscimo**, até 6x. Sem isso, o cliente vê 6x no site e 6x
 - **Desconto no Pix**: no Checkout Pro o cliente escolhe a forma de pagamento
   dentro do Mercado Pago, depois que o preço já fechou. Saiu do painel em
   set/2026.
+
+---
+
+## 2.6 Melhor Envio (frete dos Correios)
+
+A API dos próprios Correios exige contrato. O Melhor Envio cota PAC e SEDEX
+sem contrato, e o preço é o da etiqueta comprada lá, **mais barato que o de
+balcão**. 🔴 Por isso o dono gera a etiqueta no Melhor Envio e só leva o
+pacote na agência: postando e pagando no balcão, ele paga mais do que cobrou
+de frete.
+
+1. [melhorenvio.com.br](https://melhorenvio.com.br): conta **no email da loja**,
+   no CPF/CNPJ do dono
+2. **Integrações > Permissões de acesso > Gerar novo token**, com permissão de
+   cálculo de frete (`shipping-calculate`). O token vai em `MELHORENVIO_TOKEN`.
+   Anotar quando ele vence: token vencido = carrinho sem frete
+3. No painel da loja, **Ajustes > CEP de onde sai o envio**. Sem ele, o
+   carrinho diz que o envio está fora
+4. Pra testar sem conta real: token do
+   [sandbox](https://sandbox.melhorenvio.com.br) + `MELHORENVIO_SANDBOX=1`
+
+O pacote considerado na cotação é **20 × 12 × 8 cm, 300 g por óculos**
+(`PACOTE` em `lib/frete.ts`). Se a caixa que o dono usa for maior, mudar lá —
+medida errada pra menos vira cobrança de diferença na postagem.
 
 ---
 
@@ -206,6 +233,7 @@ SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_SITE_URL            https://DOMINIO  (sem barra no fim)
 MERCADOPAGO_ACCESS_TOKEN
 MERCADOPAGO_WEBHOOK_SECRET
+MELHORENVIO_TOKEN
 RESEND_API_KEY                  opcional
 EMAIL_REMETENTE                 opcional
 EMAIL_DONO                      opcional
@@ -313,8 +341,11 @@ Com o Supabase local no ar (ver README) e o **token de teste** do MP no
 
 ## O que ainda NÃO está no ar
 
-- **Envio pelos Correios.** Só retirada e entrega na região. O banco já tem o
-  tipo `correios`; o `criar_pedido()` recusa até a fase de frete nacional.
+- **Etiqueta automática.** O site cota e cobra o frete (PAC/SEDEX via Melhor
+  Envio), mas a etiqueta o dono gera à mão no Melhor Envio, com o endereço que
+  aparece no pedido. Comprar etiqueta pela API fica pra depois, se o volume
+  pedir.
+- **Rastreio automático.** O código chega pro cliente pelo WhatsApp do dono.
 - **A fonte da marca.** O site sobe com a Anton. A Hard Zone só entra depois da
   licença comercial + webfont comprada — o arquivo de avaliação está fora do
   git e o `@font-face` cai na Anton sozinho quando ele não existe

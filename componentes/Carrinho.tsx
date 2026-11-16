@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
 import {
   conferirCarrinho,
+  cotarFrete,
   fecharPedido,
   type LinhaCarrinho,
 } from "@/app/(loja)/carrinho/acoes";
+import type { OpcaoFrete } from "@/lib/frete";
 import { definirQuantidade, lembrarPedido, useCarrinho } from "@/lib/carrinho";
 import { parcelamento, precoBRL } from "@/lib/format";
 
@@ -25,10 +27,14 @@ import { parcelamento, precoBRL } from "@/lib/format";
 
 type Props = {
   entregaTexto: string;
-  freteLocalCentavos: number;
   freteGratisAcimaCentavos: number;
   reservaMinutos: number;
 };
+
+/** Cotação feita pra um carrinho específico: mudou a quantidade, vale de novo. */
+type Cotacao = { chave: string; cep: string; opcoes: OpcaoFrete[] };
+type Endereco = { rua: string; numero: string; complemento: string; bairro: string; cidade: string; uf: string };
+const enderecoVazio: Endereco = { rua: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "" };
 
 const naoAssina = () => () => {};
 
@@ -38,7 +44,6 @@ const campo =
 
 export function Carrinho({
   entregaTexto,
-  freteLocalCentavos,
   freteGratisAcimaCentavos,
   reservaMinutos,
 }: Props) {
@@ -47,7 +52,13 @@ export function Carrinho({
   const noNavegador = useSyncExternalStore(naoAssina, () => true, () => false);
 
   const [linhas, setLinhas] = useState<Record<string, LinhaCarrinho> | null>(null);
-  const [entrega, setEntrega] = useState<"retirada" | "local">("retirada");
+  const [entrega, setEntrega] = useState<"correios" | "retirada">("correios");
+  const [cep, setCep] = useState("");
+  const [cotacao, setCotacao] = useState<Cotacao | null>(null);
+  const [servico, setServico] = useState<number | null>(null);
+  const [endereco, setEndereco] = useState<Endereco>(enderecoVazio);
+  const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [cotando, iniciarCotacao] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [esgotado, setEsgotado] = useState<string | null>(null);
   const [falhou, setFalhou] = useState(false);
@@ -118,16 +129,50 @@ export function Carrinho({
     (s, i) => s + linhas![i.produto_id].preco_centavos * i.quantidade,
     0,
   );
-  const frete =
-    entrega === "local" &&
-    !(freteGratisAcimaCentavos > 0 && subtotal >= freteGratisAcimaCentavos)
-      ? freteLocalCentavos
-      : 0;
+  const itensPedido = visiveis.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade }));
+  const chaveItens = itensPedido.map((i) => `${i.produto_id}:${i.quantidade}`).join(",");
+  // cotação feita pra outro carrinho ou outro CEP não vale: peso, valor
+  // declarado ou distância mudaram
+  const soDigitos = (t: string) => t.replace(/\D/g, "");
+  const opcoes =
+    cotacao?.chave === chaveItens && soDigitos(cotacao.cep) === soDigitos(cep)
+      ? cotacao.opcoes
+      : null;
+  const escolhida = opcoes?.find((o) => o.servico === servico) ?? null;
+  const freteGratis = freteGratisAcimaCentavos > 0 && subtotal >= freteGratisAcimaCentavos;
+  const frete = entrega === "correios" && escolhida && !freteGratis ? escolhida.precoCentavos : 0;
+  const faltaFrete = entrega === "correios" && !escolhida;
   const total = subtotal + frete;
   const parcelas = parcelamento(total);
   const algumEsgotado = visiveis.some(
     (i) => linhas![i.produto_id].disponivel < i.quantidade,
   );
+
+  function cotar() {
+    setErroFrete(null);
+    iniciarCotacao(async () => {
+      const r = await cotarFrete(cep, itensPedido);
+      if (!r.ok) {
+        setCotacao(null);
+        setErroFrete(r.erro);
+        return;
+      }
+      setCotacao({ chave: chaveItens, cep, opcoes: r.opcoes });
+      // o mais barato já vem marcado: é o que quase todo mundo escolhe
+      setServico(r.opcoes[0]?.servico ?? null);
+      // ViaCEP preenche o que sabe; o que a pessoa já digitou não é apagado
+      if (r.endereco) {
+        const e = r.endereco;
+        setEndereco((atual) => ({
+          ...atual,
+          rua: e.rua || atual.rua,
+          bairro: e.bairro || atual.bairro,
+          cidade: e.cidade || atual.cidade,
+          uf: e.uf || atual.uf,
+        }));
+      }
+    });
+  }
 
   function enviar(form: FormData) {
     setErro(null);
@@ -138,9 +183,12 @@ export function Carrinho({
         telefone: String(form.get("telefone") ?? ""),
         email: String(form.get("email") ?? ""),
         entrega_tipo: entrega,
-        endereco: entrega === "local" ? String(form.get("endereco") ?? "") : undefined,
+        correios:
+          entrega === "correios" && escolhida && cotacao
+            ? { cep: cotacao.cep, servico: escolhida.servico, ...endereco }
+            : undefined,
         observacao: String(form.get("observacao") ?? "") || undefined,
-        itens: visiveis.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
+        itens: itensPedido,
       });
 
       if (!r.ok) {
@@ -253,7 +301,11 @@ export function Carrinho({
             <div className="flex justify-between gap-4">
               <dt className="text-smoke">Entrega</dt>
               <dd className="numeros font-mono text-paper">
-                {frete > 0 ? precoBRL(frete) : entrega === "local" ? "Grátis" : "—"}
+                {frete > 0
+                  ? precoBRL(frete)
+                  : entrega === "correios" && escolhida && freteGratis
+                    ? "Grátis"
+                    : "—"}
               </dd>
             </div>
             <div className="mt-2 flex items-baseline justify-between gap-4 border-t regua pt-4">
@@ -264,7 +316,7 @@ export function Carrinho({
                 </span>
                 {parcelas && (
                   <span className="numeros mt-1 block font-mono text-sm text-smoke">
-                    ou {parcelas.parcelas}x de {parcelas.valor}
+                    ou {parcelas.parcelas}x de {parcelas.valor} sem juros
                   </span>
                 )}
               </dd>
@@ -322,8 +374,8 @@ export function Carrinho({
             <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup">
               {(
                 [
+                  ["correios", "Correios"],
                   ["retirada", "Retirada"],
-                  ["local", "Entrega na região"],
                 ] as const
               ).map(([valor, texto]) => (
                 <label
@@ -347,26 +399,106 @@ export function Carrinho({
             {entregaTexto && (
               <p className="font-sans text-base leading-snug text-smoke">{entregaTexto}</p>
             )}
-            {entrega === "local" && (
-              <label className="mt-2 flex flex-col gap-2">
-                <span className="font-sans text-base text-paper">Endereço</span>
-                <textarea
-                  name="endereco"
-                  required
-                  rows={2}
-                  minLength={8}
-                  autoComplete="street-address"
-                  placeholder="Rua, número, bairro"
-                  className={campo}
-                />
-              </label>
+            {entrega === "correios" && (
+              <>
+                <label className="mt-2 flex flex-col gap-2">
+                  <span className="font-sans text-base text-paper">CEP</span>
+                  <span className="flex gap-2">
+                    <input
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value)}
+                      onKeyDown={(e) => {
+                        // Enter aqui calcula o frete; não fecha o pedido
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          cotar();
+                        }
+                      }}
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      placeholder="00000-000"
+                      maxLength={9}
+                      className={`${campo} numeros`}
+                    />
+                    <button
+                      type="button"
+                      onClick={cotar}
+                      disabled={cotando}
+                      className="shrink-0 bg-paper px-5 font-sans text-base font-medium tracking-[0.08em] text-ink uppercase transition-colors hover:bg-gold disabled:opacity-55"
+                    >
+                      {cotando ? "Calculando…" : "Calcular"}
+                    </button>
+                  </span>
+                </label>
+
+                {erroFrete && (
+                  <p role="alert" className="font-sans text-base leading-snug text-paper">
+                    {erroFrete}
+                  </p>
+                )}
+
+                {opcoes && (
+                  <>
+                    <div className="mt-1 flex flex-col gap-2" role="radiogroup" aria-label="Frete">
+                      {opcoes.map((o) => (
+                        <label
+                          key={o.servico}
+                          className={`flex min-h-14 cursor-pointer items-center justify-between gap-4 px-4 py-3 font-sans text-base transition-colors has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-gold ${
+                            servico === o.servico ? "bg-paper text-ink" : "bg-paper/8 text-paper/80 hover:bg-paper/20"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="servico"
+                            checked={servico === o.servico}
+                            onChange={() => setServico(o.servico)}
+                            className="sr-only"
+                          />
+                          <span>
+                            <span className="font-medium tracking-[0.08em] uppercase">{o.nome}</span>
+                            {o.prazoDias > 0 && (
+                              <span className="ml-2">
+                                até {o.prazoDias} {o.prazoDias === 1 ? "dia útil" : "dias úteis"}
+                              </span>
+                            )}
+                          </span>
+                          <span className="numeros font-mono">
+                            {freteGratis ? "Grátis" : precoBRL(o.precoCentavos)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="font-sans text-base leading-snug text-smoke">
+                      O prazo conta a partir da postagem.
+                    </p>
+
+                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+                      <Campo rotulo="Rua" nome="rua" valor={endereco.rua} auto="address-line1" onChange={setEndereco} />
+                      <Campo rotulo="Número" nome="numero" valor={endereco.numero} onChange={setEndereco} />
+                    </div>
+                    <Campo
+                      rotulo="Complemento (opcional)"
+                      nome="complemento"
+                      valor={endereco.complemento}
+                      auto="address-line2"
+                      opcional
+                      onChange={setEndereco}
+                    />
+                    <Campo rotulo="Bairro" nome="bairro" valor={endereco.bairro} onChange={setEndereco} />
+                    <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3">
+                      <Campo rotulo="Cidade" nome="cidade" valor={endereco.cidade} auto="address-level2" onChange={setEndereco} />
+                      <Campo rotulo="UF" nome="uf" valor={endereco.uf} auto="address-level1" onChange={setEndereco} />
+                    </div>
+                  </>
+                )}
+              </>
             )}
             <label className="mt-2 flex flex-col gap-2">
               <span className="font-sans text-base text-paper">Observação (opcional)</span>
               <input
                 name="observacao"
                 maxLength={300}
-                placeholder={entrega === "local" ? "Ponto de referência, horário" : "Melhor horário pra combinar"}
+                placeholder={entrega === "correios" ? "Alguma observação sobre a entrega" : "Melhor horário pra combinar"}
                 className={campo}
               />
             </label>
@@ -382,7 +514,7 @@ export function Carrinho({
           <div>
             <button
               type="submit"
-              disabled={enviando || algumEsgotado}
+              disabled={enviando || algumEsgotado || faltaFrete}
               className="skew-brand w-full bg-gold px-8 py-5 font-display text-xl font-black tracking-tight uppercase text-ink transition-colors hover:bg-gold-deep disabled:opacity-55 sm:text-2xl"
             >
               <span className="unskew">
@@ -392,12 +524,44 @@ export function Carrinho({
             <p className="mt-4 font-sans text-base leading-snug text-smoke">
               {algumEsgotado
                 ? "Ajusta o que esgotou pra seguir."
-                : `Você paga no Mercado Pago (Pix, crédito ou débito) e volta pra cá. A peça fica guardada pra você por ${reservaMinutos} minutos.`}
+                : faltaFrete
+                  ? "Calcula o frete com teu CEP pra seguir."
+                  : `Você paga no Mercado Pago (Pix, crédito ou débito) e volta pra cá. A peça fica guardada pra você por ${reservaMinutos} minutos.`}
             </p>
           </div>
         </form>
       </div>
     </Moldura>
+  );
+}
+
+function Campo({
+  rotulo: texto,
+  nome,
+  valor,
+  auto,
+  opcional,
+  onChange,
+}: {
+  rotulo: string;
+  nome: keyof Endereco;
+  valor: string;
+  auto?: string;
+  opcional?: boolean;
+  onChange: (f: (e: Endereco) => Endereco) => void;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col gap-2">
+      <span className="font-sans text-base text-paper">{texto}</span>
+      <input
+        name={nome}
+        value={valor}
+        required={!opcional}
+        autoComplete={auto}
+        onChange={(e) => onChange((atual) => ({ ...atual, [nome]: e.target.value }))}
+        className={campo}
+      />
+    </label>
   );
 }
 

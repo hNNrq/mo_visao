@@ -87,7 +87,9 @@ export default async function PaginaPedido({ params, searchParams }: Props) {
           texto:
             pedido.entrega_tipo === "retirada"
               ? "Tá garantido. A gente chama no WhatsApp pra combinar a retirada."
-              : "Tá garantido. A gente chama no WhatsApp pra combinar a entrega.",
+              : pedido.entrega_tipo === "correios"
+                ? "Tá garantido. Quando postar, o código de rastreio chega no teu WhatsApp."
+                : "Tá garantido. A gente chama no WhatsApp pra combinar a entrega.",
         }
       : pedido.status === "cancelado"
         ? { titulo: "Pedido cancelado", texto: "Esse pedido foi cancelado. Se foi engano, chama no WhatsApp." }
@@ -204,7 +206,11 @@ export default async function PaginaPedido({ params, searchParams }: Props) {
             <div>
               <dt className="text-sm tracking-[0.16em] text-smoke uppercase">Como recebe</dt>
               <dd className="mt-1 text-paper">
-                {pedido.entrega_tipo === "retirada" ? "Retirada combinada" : "Entrega na região"}
+                {pedido.entrega_tipo === "retirada"
+                  ? "Retirada combinada"
+                  : pedido.entrega_tipo === "correios"
+                    ? `Correios${entrega?.servico ? ` ${entrega.servico}` : ""}`
+                    : "Entrega na região"}
                 {entrega?.endereco ? ` — ${entrega.endereco}` : ""}
               </dd>
             </div>

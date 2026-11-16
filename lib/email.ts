@@ -65,6 +65,9 @@ function tabelaItens(p: PedidoComItens): string {
 function entregaTexto(p: PedidoComItens): string {
   const e = p.entrega as Record<string, string>;
   if (p.entrega_tipo === "retirada") return "Retirada combinada";
+  if (p.entrega_tipo === "correios") {
+    return `Correios${e?.servico ? ` ${esc(e.servico)}` : ""}${e?.endereco ? ` — ${esc(e.endereco)}` : ""}`;
+  }
   return `Entrega na região${e?.endereco ? ` — ${esc(e.endereco)}` : ""}`;
 }
 
@@ -81,7 +84,11 @@ export async function emailPedidoPagoCliente(p: PedidoComItens, emailDono?: stri
     responderPara: emailDono,
     html: moldura(
       `<h1 style="font-size:22px">Pagamento confirmado, ${esc(p.cliente_nome.split(" ")[0])}.</h1>` +
-        `<p>Seu pedido <b>${p.numero}</b> está garantido. A gente chama no WhatsApp pra combinar a entrega.</p>` +
+        `<p>Seu pedido <b>${p.numero}</b> está garantido. ${
+          p.entrega_tipo === "correios"
+            ? "Quando postar, o código de rastreio chega no seu WhatsApp."
+            : "A gente chama no WhatsApp pra combinar a entrega."
+        }</p>` +
         tabelaItens(p) +
         `<p><b>Como recebe:</b> ${entregaTexto(p)}</p>` +
         `<p><a href="${link}" style="color:#111">Acompanhar o pedido</a></p>`,

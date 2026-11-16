@@ -10,10 +10,18 @@ export function precoBRL(centavos: number): string {
   });
 }
 
+/**
+ * Parcelas sem juros que a vitrine promete. Decisão do dono (out/2026): até 2x
+ * sem juros, acima disso o juros é do comprador. 🔴 Tem que bater com o
+ * parcelamento sem juros configurado na conta dele no Mercado Pago — quem
+ * cobra é o MP, a vitrine só anuncia.
+ */
+export const PARCELAS_SEM_JUROS = 2;
+
 /** Maior parcela sem juros que não fique abaixo do mínimo (padrão: R$ 30). */
 export function parcelamento(
   centavos: number,
-  maxParcelas = 6,
+  maxParcelas = PARCELAS_SEM_JUROS,
   minimoCentavos = 3000
 ): { parcelas: number; valor: string } | null {
   const parcelas = Math.min(maxParcelas, Math.floor(centavos / minimoCentavos));
