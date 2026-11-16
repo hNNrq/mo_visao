@@ -44,6 +44,41 @@ export async function sair() {
   redirect("/admin/entrar");
 }
 
+/**
+ * O dono entra com uma senha provisória e troca aqui, sem depender do Henrique
+ * nem do painel do Supabase. Pede a atual de novo porque celular de barbearia
+ * fica largado no balcão: sessão aberta não pode bastar pra tomar a conta.
+ */
+export async function alterarSenha(_anterior: Resultado, form: FormData): Promise<Resultado> {
+  const atual = String(form.get("atual") ?? "");
+  const nova = String(form.get("nova") ?? "");
+  const confirmacao = String(form.get("confirmacao") ?? "");
+
+  if (nova.length < 8) return { ok: false, erro: "A senha nova precisa ter pelo menos 8 caracteres." };
+  if (nova !== confirmacao) return { ok: false, erro: "A confirmação não bate com a senha nova." };
+  if (nova === atual) return { ok: false, erro: "A senha nova precisa ser diferente da atual." };
+
+  try {
+    const { supabase, user } = await exigirAdmin();
+
+    const { error: naoConfere } = await supabase.auth.signInWithPassword({
+      email: user.email ?? "",
+      password: atual,
+    });
+    if (naoConfere) return { ok: false, erro: "A senha atual não confere." };
+
+    const { error } = await supabase.auth.updateUser({ password: nova });
+    if (error?.code === "weak_password") {
+      return { ok: false, erro: "Essa senha é fácil demais de adivinhar. Escolha outra." };
+    }
+    if (error) throw error;
+  } catch (e) {
+    return { ok: false, erro: mensagemDeErro(e) };
+  }
+
+  return { ok: true };
+}
+
 // ============================================================
 // produtos
 // ============================================================

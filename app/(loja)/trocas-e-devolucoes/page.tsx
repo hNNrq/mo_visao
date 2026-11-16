@@ -3,41 +3,54 @@ import { Bloco, PaginaTexto } from "@/componentes/PaginaTexto";
 
 export const metadata: Metadata = {
   title: "Trocas e devoluções",
-  description: "Mudou de ideia em até 7 dias ou veio com defeito em até 90: como funciona a troca na Mó Visão.",
+  description: "Desistência em até 7 dias e defeito em até 90: como funciona a devolução na Mó Visão.",
 };
 
 /**
- * ⚠️ TEXTO SUGERIDO PELA NORMAN.DGT, AINDA NÃO CONFIRMADO PELO DONO (set/2026).
+ * Regra do dono (out/2026): troca só por problema, não por gosto. O que a lei
+ * não deixa tirar e entra mesmo assim:
+ *  - compra pela internet tem 7 dias CORRIDOS de desistência, sem motivo, com
+ *    o dinheiro de volta inteiro, frete incluso (CDC, art. 49)
+ *  - defeito em produto durável vale por 90 dias (CDC, art. 26), e a loja tem
+ *    30 dias pra resolver (art. 18)
  *
- * O que é lei e não muda: 7 dias de arrependimento em compra online, com frete
- * da devolução por conta da loja (CDC art. 49), e 90 dias de garantia legal
- * contra defeito em produto durável (CDC art. 26). O que é escolha dele: troca
- * por outro modelo, prazo maior que 7 dias, prazo do reembolso, e a exigência
- * de estojo e película. Pedir "sem uso" não pode virar desculpa pra negar o
- * arrependimento — vale uma olhada de advogado antes de tratar como definitivo.
+ * O "não troca por gosto" que ele pediu cabe aqui como: desistência é devolução
+ * com reembolso, não troca por outro modelo.
+ *
+ * ⚠️ Falta o dono confirmar que sabe que o frete da devolução é por conta dele.
  */
 export default function PaginaTrocas() {
   return (
     <PaginaTexto
       titulo="Trocas e devoluções"
-      abertura="Óculos comprado pela internet a gente só vê de verdade quando põe na cara. Por isso a regra é simples."
+      abertura="Comprou pela internet e não ficou como esperava? Aqui está o que tu pode fazer."
     >
-      <Bloco titulo="Mudou de ideia? 7 dias">
+      <Bloco titulo="Desistiu? 7 dias">
         <p>
-          Em até 7 dias depois de receber o óculos, tu pode devolver e receber o dinheiro de volta, ou
-          trocar por outro modelo.
+          Em até 7 dias depois de receber o óculos, tu pode devolver sem precisar explicar o motivo, e
+          recebe o dinheiro de volta inteiro, frete incluso.
         </p>
         <p>
-          O óculos precisa voltar sem marca de uso, com o estojo e a película da lente. A gente
-          combina a retirada, sem custo pra ti.
+          O óculos volta com o que veio junto, como estojo e flanela. A gente combina a devolução, sem
+          custo pra ti.
         </p>
       </Bloco>
 
-      <Bloco titulo="Veio com defeito? 90 dias">
+      <Bloco titulo="Não troca por outro modelo">
         <p>
-          Defeito de fabricação — dobradiça solta, lente descolando, armação trincada sem ter caído —
-          tem 90 dias a partir da entrega. A gente troca pelo mesmo modelo, ou devolve o dinheiro se
-          ele não estiver mais em estoque.
+          A gente não faz troca por outro modelo ou outra cor só porque não curtiu. Nesse caso, o caminho
+          é a desistência: devolve e recebe o dinheiro.
+        </p>
+      </Bloco>
+
+      <Bloco titulo="Veio com problema? 90 dias">
+        <p>
+          Defeito de fabricação, peça quebrada no transporte ou modelo diferente do que tu pediu: avisa a
+          gente em até 90 dias depois de receber, de preferência com foto.
+        </p>
+        <p>
+          A gente resolve em até 30 dias: manda outro igual, devolve o dinheiro ou, se tu preferir ficar
+          com a peça, abate do valor.
         </p>
       </Bloco>
 
@@ -47,15 +60,15 @@ export default function PaginaTrocas() {
 
       <Bloco titulo="Como pedir">
         <p>
-          Manda o número do pedido (começa com MV-) no WhatsApp ou no direct do Instagram. Ele está
-          na página do pedido e no email do Mercado Pago.
+          Manda o número do pedido (começa com MV-) no WhatsApp ou no direct do Instagram. Ele está na
+          página do pedido e no email do Mercado Pago.
         </p>
       </Bloco>
 
       <Bloco titulo="Dinheiro de volta">
         <p>
-          Pelo mesmo meio do pagamento, em até 7 dias depois de a gente receber o óculos. No cartão,
-          o estorno aparece na fatura seguinte ou na outra, conforme o banco.
+          Pelo mesmo meio do pagamento, em até 7 dias depois de a gente receber o óculos. No cartão, o
+          estorno aparece na fatura seguinte ou na outra, conforme o banco.
         </p>
       </Bloco>
     </PaginaTexto>

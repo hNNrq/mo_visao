@@ -74,6 +74,9 @@ select id, 'Mó Visão' from auth.users where email = 'EMAIL_DO_DONO';
 Sem essa linha o login funciona e o painel responde "Você não tem acesso a
 essa área".
 
+A senha criada aqui é provisória: ele troca em **Ajustes > Sua senha**, no
+próprio painel.
+
 > ⚠️ **Nunca apague um usuário do Auth pra "resetar a senha".** A coluna
 > `admins.user_id` referencia `auth.users(id)` com `on delete cascade`: apagar o
 > usuário apaga a linha de `admins` junto, sem aviso. O usuário recriado vem com
