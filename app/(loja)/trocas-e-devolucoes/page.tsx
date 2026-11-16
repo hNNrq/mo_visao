@@ -17,7 +17,7 @@ export const metadata: Metadata = {
  * O "não troca por gosto" que ele pediu cabe aqui como: desistência é devolução
  * com reembolso, não troca por outro modelo.
  *
- * ⚠️ Falta o dono confirmar que sabe que o frete da devolução é por conta dele.
+ * Texto confirmado pelo dono em nov/2026, frete da devolução por conta dele incluso.
  */
 export default function PaginaTrocas() {
   return (
