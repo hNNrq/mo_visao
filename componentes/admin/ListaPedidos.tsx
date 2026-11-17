@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Aviso } from "@/componentes/admin/Aviso";
-import { mudarStatusPedido } from "@/app/admin/acoes";
+import { mudarStatusPedido, salvarRastreio } from "@/app/admin/acoes";
 import { linkWhatsApp } from "@/lib/aviso-cliente";
 import { precoBRL } from "@/lib/format";
 import type { PedidoComItens } from "@/app/admin/(painel)/pedidos/page";
@@ -59,11 +59,20 @@ export function ListaPedidos({ pedidos, site }: { pedidos: PedidoComItens[]; sit
   );
 }
 
+function formatarCpf(cpf: string) {
+  const d = cpf.replace(/\D/g, "");
+  return d.length === 11 ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}` : cpf;
+}
+
 function BlocoPedido({ pedido, site }: { pedido: PedidoComItens; site: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
 
-  const acoes = PROXIMO[pedido.status] ?? [];
+  const correios = pedido.entrega_tipo === "correios";
+  // nos Correios, "separado" é postado: o passo acontece ao salvar o rastreio
+  const acoes = (PROXIMO[pedido.status] ?? []).filter(
+    (a) => !(correios && a.valor === "separado"),
+  );
   const entrega = pedido.entrega as Record<string, string>;
   // pagou depois de vencer e a peça já tinha ido: é o pedido mais urgente da
   // tela, porque tem dinheiro de cliente parado esperando estorno
@@ -71,7 +80,11 @@ function BlocoPedido({ pedido, site }: { pedido: PedidoComItens; site: string })
   const carimbado = CARIMBADO[pedido.status] || estornar;
   const rotuloStatus = estornar
     ? "Pagou sem peça — estornar"
-    : (NOMES[pedido.status] ?? pedido.status);
+    : correios && pedido.status === "pago"
+      ? "Pago — postar"
+      : correios && pedido.status === "separado"
+        ? "Postado"
+        : (NOMES[pedido.status] ?? pedido.status);
   /**
    * A mensagem muda com o estado: marcou "separado", o próximo toque aqui já
    * manda "tá separado". O link do pedido vai junto — é assim que ele chega no
@@ -158,14 +171,28 @@ function BlocoPedido({ pedido, site }: { pedido: PedidoComItens; site: string })
             {pedido.cliente_email}
           </a>
         </p>
-        <p className="mt-1 text-smoke">
-          {pedido.entrega_tipo === "retirada"
-            ? "Retirada"
-            : pedido.entrega_tipo === "correios"
-              ? "Envio pelos Correios"
-              : "Entrega na região"}
-          {entrega?.endereco ? ` · ${entrega.endereco}` : ""}
-        </p>
+        {correios ? (
+          <div className="mt-1 text-smoke">
+            <p>
+              Correios {entrega?.servico_nome ?? ""}
+              {pedido.frete_centavos > 0 ? ` · frete ${precoBRL(pedido.frete_centavos)}` : " · frete grátis"}
+            </p>
+            {/* do jeito que o Melhor Envio pede na etiqueta: dá pra copiar campo a campo */}
+            <p className="text-paper/85">
+              {[entrega?.rua, entrega?.numero, entrega?.complemento].filter(Boolean).join(", ")}
+            </p>
+            <p className="text-paper/85">
+              {entrega?.bairro} · {entrega?.cidade}/{entrega?.uf}
+            </p>
+            <p className="numeros text-paper/85">CEP {entrega?.cep}</p>
+            {pedido.cliente_cpf && <p className="numeros">CPF {formatarCpf(pedido.cliente_cpf)}</p>}
+          </div>
+        ) : (
+          <p className="mt-1 text-smoke">
+            {pedido.entrega_tipo === "retirada" ? "Retirada" : "Entrega na região"}
+            {entrega?.endereco ? ` · ${entrega.endereco}` : ""}
+          </p>
+        )}
         {entrega?.observacao && <p className="mt-1 text-smoke">“{entrega.observacao}”</p>}
         {estornar && (
           <p className="mt-3 text-paper">
@@ -174,6 +201,40 @@ function BlocoPedido({ pedido, site }: { pedido: PedidoComItens; site: string })
           </p>
         )}
       </div>
+
+      {correios && ["pago", "separado"].includes(pedido.status) && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const codigo = String(new FormData(e.currentTarget).get("rastreio") ?? "");
+            setErro(null);
+            iniciar(async () => {
+              const r = await salvarRastreio(pedido.id, codigo);
+              if (!r.ok) setErro(r.erro ?? "Não deu certo.");
+            });
+          }}
+          className="mt-5 flex flex-wrap items-end gap-2.5"
+        >
+          <label className="flex min-w-[14rem] flex-1 flex-col gap-1.5">
+            <span className="font-sans text-sm tracking-[0.16em] uppercase text-smoke">
+              Código de rastreio
+            </span>
+            <input
+              name="rastreio"
+              defaultValue={pedido.rastreio ?? ""}
+              placeholder="AB123456789BR"
+              autoCapitalize="characters"
+              className="numeros border-b border-paper/20 bg-transparent py-2 font-mono text-lg text-paper uppercase outline-none focus:border-gold"
+            />
+          </label>
+          <button
+            type="submit"
+            className="carimbo skew-brand bg-gold px-4 py-3 font-display text-sm font-black tracking-tight uppercase text-ink transition-colors hover:bg-gold-deep"
+          >
+            <span className="unskew">{pedido.rastreio ? "Trocar código" : "Salvar e marcar postado"}</span>
+          </button>
+        </form>
+      )}
 
       {whats && (
         <a

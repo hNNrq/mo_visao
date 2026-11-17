@@ -99,7 +99,7 @@ export function montarEmail(
     .join("\n");
 
   const linhaEntrega = [
-    ENTREGA[pedido.entrega_tipo] ?? pedido.entrega_tipo,
+    entrega.servico_nome ? `Correios ${entrega.servico_nome}` : (ENTREGA[pedido.entrega_tipo] ?? pedido.entrega_tipo),
     entrega.endereco,
   ]
     .filter(Boolean)
@@ -115,7 +115,9 @@ export function montarEmail(
 
   const abertura = semPeca
     ? `O pagamento do ${pedido.numero} entrou depois de a reserva vencer, e a peça já tinha saído. Precisa estornar pelo Mercado Pago e avisar o cliente.`
-    : `Entrou pagamento do ${pedido.numero}. É separar a peça e combinar a entrega.`;
+    : pedido.entrega_tipo === "correios"
+      ? `Entrou pagamento do ${pedido.numero}. É separar a peça, gerar a etiqueta no Melhor Envio e postar.`
+      : `Entrou pagamento do ${pedido.numero}. É separar a peça e combinar a entrega.`;
 
   const texto = [
     abertura,
@@ -126,6 +128,7 @@ export function montarEmail(
     `Cliente: ${pedido.cliente_nome}`,
     `Telefone: ${pedido.cliente_telefone}`,
     `Entrega: ${linhaEntrega}`,
+    pedido.cliente_cpf ? `CPF: ${pedido.cliente_cpf}` : null,
     entrega.observacao ? `Observação: “${entrega.observacao}”` : null,
     "",
     whats ? `Mandar mensagem pro cliente no WhatsApp:\n${whats}\n` : null,

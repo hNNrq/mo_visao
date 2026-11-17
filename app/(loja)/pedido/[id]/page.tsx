@@ -6,6 +6,7 @@ import { CopiarLink } from "@/componentes/CopiarLink";
 import { lerPedidoPublico, sincronizarPagamento, type PedidoPublico } from "@/lib/checkout";
 import { precoBRL } from "@/lib/format";
 import { lerConfig } from "@/lib/produtos";
+import { RASTREIO_CORREIOS } from "@/lib/aviso-cliente";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,11 @@ export default async function PaginaPedido({ params, searchParams }: Props) {
             </div>
           </dl>
           <p className="mt-6 font-sans text-base leading-snug text-smoke">
-            {pedido.entrega_tipo === "retirada" ? "Retirada combinada." : "Entrega na região."}{" "}
+            {pedido.entrega_tipo === "retirada"
+              ? "Retirada combinada."
+              : pedido.entrega_tipo === "correios"
+                ? "Envio pelos Correios."
+                : "Entrega na região."}{" "}
             O endereço desta página é o teu acesso ao pedido — neste aparelho ele fica em
             &quot;Pedidos&quot;; pra abrir de outro, guarda o link.
           </p>
@@ -120,6 +125,7 @@ function Situacao({
 
   if (["pago", "separado", "entregue"].includes(pedido.status)) {
     const retirada = pedido.entrega_tipo === "retirada";
+    const correios = pedido.entrega_tipo === "correios";
     const titulo =
       pedido.status === "entregue"
         ? retirada
@@ -128,7 +134,9 @@ function Situacao({
         : pedido.status === "separado"
           ? retirada
             ? "Separado, pronto pra retirar"
-            : "Separado, pronto pra sair"
+            : correios
+              ? "Postado nos Correios"
+              : "Separado, pronto pra sair"
           : `Pagou, ${primeiroNome}. Tá garantido.`;
     const texto =
       pedido.status === "entregue"
@@ -136,15 +144,34 @@ function Situacao({
         : pedido.status === "separado"
           ? retirada
             ? "Teu óculos já está separado. A gente combina no WhatsApp onde e quando buscar."
-            : "Teu óculos já está separado. A gente combina no WhatsApp o melhor horário pra entregar."
+            : correios
+              ? "Teu óculos já está a caminho. Com o código abaixo dá pra ver onde ele está."
+              : "Teu óculos já está separado. A gente combina no WhatsApp o melhor horário pra entregar."
           : retirada
             ? "A gente te chama no WhatsApp pra combinar onde e quando buscar."
-            : "A gente te chama no WhatsApp pra combinar a entrega.";
+            : correios
+              ? "A gente posta nos Correios e te manda o código de rastreio no WhatsApp."
+              : "A gente te chama no WhatsApp pra combinar a entrega.";
     return (
       <>
         <h1 className={TITULO}>{titulo}</h1>
         <p className={TEXTO}>{texto}</p>
-        <Etapas status={pedido.status} retirada={retirada} pagoEm={pedido.pago_em} />
+        {correios && pedido.rastreio && pedido.status !== "entregue" && (
+          <p className="mt-6 font-sans text-lg text-smoke">
+            Rastreio{" "}
+            <span className="numeros font-mono text-xl font-bold text-gold">{pedido.rastreio}</span>
+            {" · "}
+            <a
+              href={RASTREIO_CORREIOS}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 transition-colors hover:text-gold"
+            >
+              acompanhar nos Correios
+            </a>
+          </p>
+        )}
+        <Etapas status={pedido.status} retirada={retirada} correios={correios} pagoEm={pedido.pago_em} />
         {linkWhats && (
           <a href={linkWhats} className={CARIMBO}>
             <span className="unskew">Chamar no WhatsApp</span>
@@ -235,13 +262,19 @@ function Situacao({
 function Etapas({
   status,
   retirada,
+  correios,
   pagoEm,
 }: {
   status: PedidoPublico["status"];
   retirada: boolean;
+  correios: boolean;
   pagoEm: string | null;
 }) {
-  const etapas = ["Pago", retirada ? "Pronto pra retirar" : "Separado", retirada ? "Retirado" : "Entregue"];
+  const etapas = [
+    "Pago",
+    retirada ? "Pronto pra retirar" : correios ? "Postado" : "Separado",
+    retirada ? "Retirado" : "Entregue",
+  ];
   const atual = status === "entregue" ? 2 : status === "separado" ? 1 : 0;
   const data = pagoEm
     ? new Date(pagoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" })

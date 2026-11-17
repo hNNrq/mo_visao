@@ -361,6 +361,40 @@ export async function mudarStatusPedido(id: string, status: string): Promise<Res
   return { ok: true };
 }
 
+/**
+ * Código de rastreio dos Correios. Ao salvar num pedido pago, ele passa pra
+ * "postado" (status separado) — postar é o que o dono fez de fato. Apagar o
+ * campo tira o código, sem mexer no status.
+ */
+export async function salvarRastreio(id: string, codigo: string): Promise<Resultado> {
+  const rastreio = String(codigo ?? "").replace(/\s/g, "").toUpperCase();
+  // formato dos Correios: 2 letras, 9 números, BR (ex.: AB123456789BR)
+  if (rastreio && !/^[A-Z]{2}\d{9}[A-Z]{2}$/.test(rastreio)) {
+    return { ok: false, erro: "Confere o código: 2 letras, 9 números e 2 letras (ex.: AB123456789BR)." };
+  }
+
+  try {
+    const { supabase } = await exigirAdmin();
+    const { data: atual, error: erroLer } = await supabase
+      .from("pedidos")
+      .select("status")
+      .eq("id", id)
+      .single();
+    if (erroLer) throw erroLer;
+
+    const mudanca: { rastreio: string | null; status?: string } = { rastreio: rastreio || null };
+    if (rastreio && atual.status === "pago") mudanca.status = "separado";
+
+    const { error } = await supabase.from("pedidos").update(mudanca).eq("id", id);
+    if (error) throw error;
+  } catch (e) {
+    return { ok: false, erro: mensagemDeErro(e) };
+  }
+
+  revalidatePath("/admin/pedidos");
+  return { ok: true };
+}
+
 export async function salvarConfig(
   _anterior: Resultado,
   form: FormData

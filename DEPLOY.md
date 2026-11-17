@@ -169,6 +169,43 @@ key, `EMAIL_DE=pedidos@<dominio>`) — o código é o mesmo.
 O destinatário fica em variável de ambiente, e não em /admin/config, porque a
 tabela `config` é legível pela chave pública.
 
+### 2.5 Frete pelos Correios (Melhor Envio)
+
+`lib/frete.ts` cota PAC e SEDEX no Melhor Envio. Sem as variáveis abaixo, o
+carrinho mostra só a retirada — o site não quebra.
+
+```
+MELHORENVIO_TOKEN=<token da conta do DONO, permissão shipping-calculate>
+MELHORENVIO_CEP_ORIGEM=<CEP de onde ele posta, só números>
+# MELHORENVIO_SANDBOX=1   # só pra testar com token do sandbox
+```
+
+O CEP de origem fica em variável e não em /admin/config porque a `config` é
+legível pela chave pública e o CEP aponta pra casa dele.
+
+Passo a passo, junto com o dono (no celular dele):
+
+1. Conta em melhorenvio.com.br **no CPF dele**
+2. Configurações > Permissões de acesso > Gerar novo token, marcando
+   `shipping-calculate` (e `shipping-generate`/`shipping-checkout` se ele for
+   comprar etiqueta pela API um dia). **Anotar a data em que o token vence** —
+   vencido, o carrinho volta a mostrar só a retirada
+3. Colar token e CEP na Netlify e redeployar
+4. Medir e pesar a caixa com o óculos dentro e acertar `PACOTE` em
+   `lib/frete.ts` (hoje é chute: 12×8×20 cm, 300 g). Errar pra menos faz o
+   Melhor Envio cobrar diferença na postagem
+
+🔴 **A etiqueta sai sempre pelo Melhor Envio**, nunca paga no balcão: o preço
+que o cliente pagou é o da etiqueta de lá, mais barato que o de balcão.
+
+Como o pedido anda nos Correios: pagou → no painel aparece "Pago — postar" com
+endereço, CEP e CPF prontos pra etiqueta → o dono posta, cola o código de
+rastreio e salva (o pedido vira "Postado") → "Avisar no WhatsApp" já manda o
+código pro cliente, e a página do pedido mostra o rastreio.
+
+"Frete grátis acima de" só vale pros Correios se o dono ligar em /admin/config
+(desligado por padrão: ali o frete sai do bolso dele).
+
 ---
 
 ## Estado do projeto (09/09/2026)
@@ -195,6 +232,10 @@ Já feito, não precisa refazer:
   real de Pix (MV-00019, R$ 1,90) confirmada pelo webhook em 14 segundos.
   Aviso sem assinatura válida conferido de fora: volta 401
 - parcelas sem juros em /admin/config: **2** — tem que bater com a conta do MP
+- ⏳ **`006_envio.sql` (Correios) ainda NÃO aplicada.** Ordem pra publicar o frete:
+  1) rodar a `006` no SQL Editor, 2) variáveis do Melhor Envio (seção 2.5),
+  3) juntar a branch `frete/correios` no `main`. A `006` é compatível com o
+  código antigo (o parâmetro novo tem default), então pode ir antes do merge
 
 ---
 
@@ -278,6 +319,9 @@ número ao lado de cada preço.
 ---
 
 ## O que ainda NÃO está no ar
+
+- **Frete pelos Correios** (seção 2.5): código pronto na branch `frete/correios`,
+  falta a `006`, a conta do Melhor Envio do dono e a medida da caixa.
 
 - **O "produto teste" de R$ 2** ainda está ativo na vitrine. Desligar ou apagar
   pelo painel antes de divulgar, junto com os três óculos de demonstração.

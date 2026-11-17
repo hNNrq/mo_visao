@@ -58,8 +58,12 @@ export type Pedido = {
   cliente_nome: string;
   cliente_email: string;
   cliente_telefone: string;
+  /** só nos Correios: o Melhor Envio pede o CPF de quem recebe */
+  cliente_cpf: string | null;
   entrega_tipo: EntregaTipo;
   entrega: Record<string, unknown>;
+  /** código dos Correios, o dono preenche no painel depois de postar */
+  rastreio: string | null;
   subtotal_centavos: number;
   frete_centavos: number;
   desconto_centavos: number;

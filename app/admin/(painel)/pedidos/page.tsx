@@ -18,7 +18,7 @@ export default async function PaginaPedidos() {
     .from("pedidos")
     .select(
       `id, numero, status, cliente_nome, cliente_email, cliente_telefone,
-       entrega_tipo, entrega, subtotal_centavos, frete_centavos,
+       cliente_cpf, entrega_tipo, entrega, rastreio, subtotal_centavos, frete_centavos,
        desconto_centavos, total_centavos, mp_preference_id, mp_payment_id,
        metodo_pagamento, pagamento_escolhido, mp_checkout_url, precisa_estorno,
        pago_em, expira_em, created_at,

@@ -15,7 +15,8 @@ import {
 } from "@/lib/carrinho";
 import { precoBRL } from "@/lib/format";
 import type { ItemCarrinho } from "@/lib/types";
-import { conferirCarrinho, fecharPedido } from "@/app/(loja)/carrinho/acoes";
+import { conferirCarrinho, cotarFrete, fecharPedido } from "@/app/(loja)/carrinho/acoes";
+import type { OpcaoFrete } from "@/lib/frete";
 
 /**
  * O carrinho e o fechamento na mesma tela.
@@ -28,7 +29,8 @@ import { conferirCarrinho, fecharPedido } from "@/app/(loja)/carrinho/acoes";
  * loja — quem calcula o valor cobrado é o banco. As duas batem porque as
  * regras são as mesmas (desconto do Pix só sobre as peças, frete grátis acima
  * do valor configurado); se o preço mudou no meio do caminho, a `conferir`
- * abaixo corrige a lista assim que a página abre.
+ * abaixo corrige a lista assim que a página abre. O frete dos Correios mostrado
+ * é a cotação do CEP digitado; o servidor cota de novo ao fechar.
  *
  * O formulário é a régua da prancha: campo sem caixa, só o fio embaixo, que
  * acende em ouro no foco. O `steel` dos campos do painel não entra na vitrine.
@@ -36,8 +38,11 @@ import { conferirCarrinho, fecharPedido } from "@/app/(loja)/carrinho/acoes";
 
 export type ConfigCheckout = {
   descontoPixPct: number;
-  freteLocalCentavos: number;
   freteGratisAcimaCentavos: number;
+  /** o "frete grátis acima de" vale pros Correios? (o dono liga no painel) */
+  freteGratisCorreios: boolean;
+  /** token e CEP de origem do Melhor Envio configurados */
+  freteLigado: boolean;
   entregaTexto: string;
   parcelasSemJuros: number;
   pagamentoLigado: boolean;
@@ -49,7 +54,14 @@ const CAMPO =
 
 export function Carrinho({ config }: { config: ConfigCheckout }) {
   const itens = useCarrinho();
-  const [entrega, setEntrega] = useState<"retirada" | "local">("local");
+  const [entrega, setEntrega] = useState<"retirada" | "correios">(
+    config.freteLigado ? "correios" : "retirada",
+  );
+  const [cotacao, setCotacao] = useState<{ cep: string; opcoes: OpcaoFrete[] } | null>(null);
+  const [servico, setServico] = useState<number | null>(null);
+  const [endereco, setEndereco] = useState({ rua: "", bairro: "", cidade: "", uf: "" });
+  const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [cotando, iniciarCotacao] = useTransition();
   const [pagamento, setPagamento] = useState<"pix" | "cartao">("pix");
   const [erro, setErro] = useState<{ texto: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -79,6 +91,15 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
     // só quando muda QUAIS peças estão no carrinho, não a quantidade
   }, [ids]);
 
+  // mudou o que vai na caixa, mudou o frete: a cotação antiga não vale mais
+  const conteudo = itens.map((i) => `${i.produto_id}:${i.quantidade}`).join(",");
+  const [conteudoCotado, setConteudoCotado] = useState(conteudo);
+  if (conteudo !== conteudoCotado) {
+    setConteudoCotado(conteudo);
+    setCotacao(null);
+    setServico(null);
+  }
+
   if (!montado) return <main className="min-h-[70svh] bg-ink" />;
 
   if (itens.length === 0) {
@@ -103,13 +124,47 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
   }
 
   const subtotal = itens.reduce((s, i) => s + i.preco_centavos * i.quantidade, 0);
-  const gratis = config.freteGratisAcimaCentavos > 0 && subtotal >= config.freteGratisAcimaCentavos;
-  const frete = entrega === "local" && !gratis ? config.freteLocalCentavos : 0;
+  const gratis =
+    config.freteGratisCorreios &&
+    config.freteGratisAcimaCentavos > 0 &&
+    subtotal >= config.freteGratisAcimaCentavos;
+  const escolhido = cotacao?.opcoes.find((o) => o.servico === servico) ?? null;
+  const frete = entrega === "correios" && escolhido && !gratis ? escolhido.precoCentavos : 0;
   const desconto =
     pagamento === "pix" && config.descontoPixPct > 0
       ? Math.round((subtotal * Math.min(config.descontoPixPct, 50)) / 100)
       : 0;
   const total = subtotal + frete - desconto;
+
+  function calcularFrete(cepDigitado: string) {
+    const cep = cepDigitado.replace(/\D/g, "");
+    setErroFrete(null);
+    iniciarCotacao(async () => {
+      const r = await cotarFrete(
+        cep,
+        itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
+      ).catch(() => ({ ok: false as const, erro: "Não deu pra calcular o frete agora. Tenta de novo." }));
+      if (!r.ok) {
+        setCotacao(null);
+        setServico(null);
+        setErroFrete(r.erro);
+        return;
+      }
+      setCotacao({ cep, opcoes: r.opcoes });
+      // o mais barato já vem marcado: é o que a maioria escolhe
+      setServico(r.opcoes[0]?.servico ?? null);
+      // só preenche o que veio; o que a pessoa já digitou não some à toa
+      if (r.endereco) {
+        const e = r.endereco;
+        setEndereco((atual) => ({
+          rua: e.rua || atual.rua,
+          bairro: e.bairro || atual.bairro,
+          cidade: e.cidade || atual.cidade,
+          uf: e.uf || atual.uf,
+        }));
+      }
+    });
+  }
 
   function enviar(form: FormData) {
     setErro(null);
@@ -121,7 +176,15 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
         email: String(form.get("email") ?? ""),
         telefone: String(form.get("telefone") ?? ""),
         entrega,
-        endereco: String(form.get("endereco") ?? ""),
+        cpf: String(form.get("cpf") ?? ""),
+        cep: String(form.get("cep") ?? ""),
+        rua: endereco.rua,
+        numero: String(form.get("numero") ?? ""),
+        complemento: String(form.get("complemento") ?? ""),
+        bairro: endereco.bairro,
+        cidade: endereco.cidade,
+        uf: endereco.uf,
+        servico: servico ?? undefined,
         observacao: String(form.get("observacao") ?? ""),
         pagamento,
         itens: itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
@@ -300,17 +363,15 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
             <fieldset>
               <legend className={ROTULO}>Como tu recebe</legend>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Opcao
-                  nome="entrega"
-                  ativo={entrega === "local"}
-                  aoEscolher={() => setEntrega("local")}
-                  titulo="Entrega"
-                  detalhe={
-                    gratis || config.freteLocalCentavos === 0
-                      ? "Grátis na região"
-                      : `${precoBRL(config.freteLocalCentavos)} na região`
-                  }
-                />
+                {config.freteLigado && (
+                  <Opcao
+                    nome="entrega"
+                    ativo={entrega === "correios"}
+                    aoEscolher={() => setEntrega("correios")}
+                    titulo="Correios"
+                    detalhe={gratis ? "Frete grátis" : "PAC ou SEDEX, Brasil todo"}
+                  />
+                )}
                 <Opcao
                   nome="entrega"
                   ativo={entrega === "retirada"}
@@ -324,16 +385,140 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
               )}
             </fieldset>
 
-            {entrega === "local" && (
-              <label className="flex flex-col gap-1">
-                <span className={ROTULO}>Endereço</span>
-                <input
-                  name="endereco"
-                  autoComplete="street-address"
-                  placeholder="Rua, número, bairro"
-                  className={CAMPO}
-                />
-              </label>
+            {entrega === "correios" && (
+              <fieldset className="flex flex-col gap-6">
+                <legend className="sr-only">Endereço de entrega</legend>
+                <div className="flex items-end gap-3">
+                  <label className="flex flex-1 flex-col gap-1">
+                    <span className={ROTULO}>CEP</span>
+                    <input
+                      name="cep"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      placeholder="30000-000"
+                      maxLength={9}
+                      onChange={(e) => {
+                        const cep = e.target.value.replace(/\D/g, "");
+                        // 8 números: já calcula, sem a pessoa caçar o botão
+                        if (cep.length === 8 && cep !== cotacao?.cep && !cotando) calcularFrete(cep);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          calcularFrete(e.currentTarget.value);
+                        }
+                      }}
+                      className={`${CAMPO} numeros`}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={cotando}
+                    onClick={(e) => {
+                      const campo = e.currentTarget.form?.elements.namedItem("cep") as HTMLInputElement | null;
+                      calcularFrete(campo?.value ?? "");
+                    }}
+                    className="min-h-11 border regua px-4 font-sans text-sm tracking-[0.16em] uppercase text-paper transition-colors hover:border-gold hover:text-gold disabled:text-sob"
+                  >
+                    {cotando ? "Calculando…" : "Calcular"}
+                  </button>
+                </div>
+
+                {erroFrete && (
+                  <p role="alert" className="border-l-2 border-gold pl-4 font-sans text-lg leading-snug text-paper">
+                    {erroFrete}
+                  </p>
+                )}
+
+                {cotacao && (
+                  <>
+                    <div role="radiogroup" aria-label="Tipo de envio" className="grid grid-cols-2 gap-2">
+                      {cotacao.opcoes.map((o) => (
+                        <Opcao
+                          key={o.servico}
+                          nome="servico"
+                          ativo={servico === o.servico}
+                          aoEscolher={() => setServico(o.servico)}
+                          titulo={`${o.nome} · ${gratis ? "Grátis" : precoBRL(o.precoCentavos)}`}
+                          detalhe={`Até ${o.prazoDias} ${o.prazoDias === 1 ? "dia útil" : "dias úteis"}`}
+                        />
+                      ))}
+                    </div>
+
+                    <label className="flex flex-col gap-1">
+                      <span className={ROTULO}>Rua</span>
+                      <input
+                        name="rua"
+                        autoComplete="address-line1"
+                        value={endereco.rua}
+                        onChange={(e) => setEndereco({ ...endereco, rua: e.target.value })}
+                        className={CAMPO}
+                      />
+                    </label>
+                    <div className="grid grid-cols-[1fr_2fr] gap-4">
+                      <label className="flex flex-col gap-1">
+                        <span className={ROTULO}>Número</span>
+                        <input name="numero" className={`${CAMPO} numeros`} />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={ROTULO}>Complemento</span>
+                        <input
+                          name="complemento"
+                          autoComplete="address-line2"
+                          placeholder="Apto, bloco…"
+                          className={CAMPO}
+                        />
+                      </label>
+                    </div>
+                    <label className="flex flex-col gap-1">
+                      <span className={ROTULO}>Bairro</span>
+                      <input
+                        name="bairro"
+                        value={endereco.bairro}
+                        onChange={(e) => setEndereco({ ...endereco, bairro: e.target.value })}
+                        className={CAMPO}
+                      />
+                    </label>
+                    <div className="grid grid-cols-[3fr_1fr] gap-4">
+                      <label className="flex flex-col gap-1">
+                        <span className={ROTULO}>Cidade</span>
+                        <input
+                          name="cidade"
+                          autoComplete="address-level2"
+                          value={endereco.cidade}
+                          onChange={(e) => setEndereco({ ...endereco, cidade: e.target.value })}
+                          className={CAMPO}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={ROTULO}>UF</span>
+                        <input
+                          name="uf"
+                          autoComplete="address-level1"
+                          maxLength={2}
+                          value={endereco.uf}
+                          onChange={(e) => setEndereco({ ...endereco, uf: e.target.value.toUpperCase() })}
+                          className={`${CAMPO} uppercase`}
+                        />
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                <label className="flex flex-col gap-1">
+                  <span className={ROTULO}>CPF</span>
+                  <input
+                    name="cpf"
+                    inputMode="numeric"
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={`${CAMPO} numeros`}
+                  />
+                  <span className="mt-1 font-sans text-sm text-smoke">
+                    Os Correios pedem o CPF de quem recebe pra gerar a etiqueta.
+                  </span>
+                </label>
+              </fieldset>
             )}
 
             <label className="flex flex-col gap-1">
@@ -367,8 +552,11 @@ export function Carrinho({ config }: { config: ConfigCheckout }) {
 
             <dl className="numeros flex flex-col gap-2 border-t regua pt-6 font-sans text-lg">
               <Linha rotulo="Peças" valor={precoBRL(subtotal)} />
-              {entrega === "local" && (
-                <Linha rotulo="Entrega" valor={frete === 0 ? "Grátis" : precoBRL(frete)} />
+              {entrega === "correios" && (
+                <Linha
+                  rotulo={escolhido ? `Frete ${escolhido.nome}` : "Frete"}
+                  valor={!escolhido ? "Coloca o CEP" : frete === 0 ? "Grátis" : precoBRL(frete)}
+                />
               )}
               {desconto > 0 && <Linha rotulo="Desconto no Pix" valor={`− ${precoBRL(desconto)}`} />}
               <div className="mt-2 flex items-baseline justify-between gap-4">

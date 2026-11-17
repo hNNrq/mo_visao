@@ -61,6 +61,7 @@ try {
   await db.exec(carregar("supabase/migrations/002_funcoes.sql"));
   await db.exec(carregar("supabase/migrations/004_seed.sql"));
   await db.exec(carregar("supabase/migrations/005_checkout.sql"));
+  await db.exec(carregar("supabase/migrations/006_envio.sql"));
 } catch (e) {
   console.error("erro ao carregar as migrations:", e.message);
   process.exit(1);
@@ -268,6 +269,54 @@ const { rows: gratis } = await criar([{ produto_id: romeo, quantidade: 2 }], "lo
 ok(gratis[0].total_centavos === 80000, "frete grátis acima do valor configurado", String(gratis[0].total_centavos));
 
 // ============================================================
+// Correios — frete cotado pelo servidor (006)
+// ============================================================
+console.log("\nCorreios (006):");
+
+await db.query(`update config set valor = '0' where chave = 'frete_gratis_acima_centavos'`);
+await db.query(`update produtos set estoque = estoque + 10 where id = $1`, [romeo]);
+const correios = (frete, pagamento = "pix", cliente = CLIENTE) =>
+  db.query(`select * from criar_pedido($1::jsonb, 'correios', $2::jsonb, $3::jsonb, $4, $5)`, [
+    cliente,
+    JSON.stringify({ cep: "01001-000", servico: 1, servico_nome: "PAC", endereco: "Praça da Sé, 1" }),
+    JSON.stringify([{ produto_id: romeo, quantidade: 1 }]),
+    pagamento,
+    frete,
+  ]);
+
+erro = "";
+try { await correios(null); } catch (e) { erro = e.message; }
+ok(erro.includes("FRETE_OBRIGATORIO"), "Correios sem frete cotado é recusado", erro);
+erro = "";
+try { await correios(0); } catch (e) { erro = e.message; }
+ok(erro.includes("FRETE_OBRIGATORIO"), "Correios com frete zero é recusado (zero só pelo frete grátis do banco)", erro);
+
+const comCpf = JSON.stringify({ nome: "Bia", email: "b@x.com", telefone: "11999990000", cpf: "529.982.247-25" });
+const { rows: pac } = await correios(2350, "pix", comCpf);
+({ rows: p } = await db.query(
+  `select subtotal_centavos s, frete_centavos f, desconto_centavos d, total_centavos t,
+          cliente_cpf, entrega->>'servico_nome' servico, rastreio
+     from pedidos where id = $1`, [pac[0].id]));
+ok(p[0].s === 40000 && p[0].f === 2350 && p[0].d === 2000 && p[0].t === 40350,
+  "frete cotado entra no total; desconto do Pix só sobre a peça", JSON.stringify(p[0]));
+ok(p[0].cliente_cpf === "52998224725", "CPF guardado só com dígitos", String(p[0].cliente_cpf));
+ok(p[0].servico === "PAC" && p[0].rastreio === null, "serviço guardado; rastreio vazio até o dono postar");
+
+// frete grátis: na região sempre; nos Correios só se o dono ligar
+await db.query(`update config set valor = '30000' where chave = 'frete_gratis_acima_centavos'`);
+const { rows: semGratis } = await correios(2350, "cartao");
+ok(semGratis[0].total_centavos === 42350, "Correios: frete grátis desligado, cliente paga o frete", String(semGratis[0].total_centavos));
+await db.query(`insert into config (chave, valor) values ('frete_gratis_correios', '"true"') on conflict (chave) do update set valor = excluded.valor`);
+const { rows: comGratis } = await correios(2350, "cartao");
+ok(comGratis[0].total_centavos === 40000, "Correios: frete grátis ligado no painel (texto \"true\") zera o frete", String(comGratis[0].total_centavos));
+await db.query(`update config set valor = 'false' where chave = 'frete_gratis_correios'`);
+await db.query(`update config set valor = '0' where chave = 'frete_gratis_acima_centavos'`);
+
+const { rows: sobrecarga } = await db.query(
+  `select count(*)::int n from pg_proc where proname = 'criar_pedido'`);
+ok(sobrecarga[0].n === 1, "só uma versão de criar_pedido (sem sobrecarga ambígua)", String(sobrecarga[0].n));
+
+// ============================================================
 // quem pode chamar as funções
 // ============================================================
 console.log("\nPermissões:");
@@ -277,10 +326,10 @@ const { rows: perm } = await db.query(`
     has_function_privilege('anon', 'confirmar_pedido(uuid,text,text)', 'execute') as anon_confirma,
     has_function_privilege('authenticated', 'confirmar_pedido(uuid,text,text)', 'execute') as auth_confirma,
     has_function_privilege('anon', 'reservar_estoque(jsonb)', 'execute') as anon_reserva,
-    has_function_privilege('anon', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text)', 'execute') as anon_cria,
+    has_function_privilege('anon', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text,integer)', 'execute') as anon_cria,
     has_function_privilege('anon', 'cancelar_pedido(uuid)', 'execute') as anon_cancela,
     has_function_privilege('service_role', 'confirmar_pedido(uuid,text,text)', 'execute') as srv_confirma,
-    has_function_privilege('service_role', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text)', 'execute') as srv_cria,
+    has_function_privilege('service_role', 'criar_pedido(jsonb,entrega_tipo,jsonb,jsonb,text,integer)', 'execute') as srv_cria,
     has_function_privilege('authenticated', 'cancelar_pedido(uuid)', 'execute') as auth_cancela
 `);
 const pr = perm[0];

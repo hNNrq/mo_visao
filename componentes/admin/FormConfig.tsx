@@ -60,7 +60,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
         <input
           name="banner_topo"
           defaultValue={v("banner_topo")}
-          placeholder="Frete grátis na região"
+          placeholder="Enviamos pro Brasil todo"
           className={campo}
         />
         <span className={dica}>
@@ -99,19 +99,6 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
         </span>
       </label>
 
-      <label className="flex flex-col gap-2">
-        <span className={rotulo}>Frete na região (R$)</span>
-        <input
-          name="frete_local_reais"
-          inputMode="decimal"
-          defaultValue={reais("frete_local_centavos")}
-          placeholder="0"
-          className={`${campo} numeros`}
-        />
-        <span className={dica}>
-          Quanto o cliente paga pra receber em casa. Deixe 0 pra entrega grátis.
-        </span>
-      </label>
 
       <label className="flex flex-col gap-2">
         <span className={rotulo}>Frete grátis acima de (R$)</span>
@@ -123,7 +110,24 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           className={`${campo} numeros`}
         />
         <span className={dica}>
-          Pedido desse valor pra cima não paga entrega. Deixe 0 pra não usar.
+          Pedido desse valor pra cima não paga o frete. Só vale se a opção
+          abaixo estiver ligada. Deixe 0 pra não usar.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className={rotulo}>Frete grátis nos Correios</span>
+        <select
+          name="frete_gratis_correios"
+          defaultValue={String(config.frete_gratis_correios) === "true" ? "true" : "false"}
+          className={campo}
+        >
+          <option value="false">Não — o cliente sempre paga o frete</option>
+          <option value="true">Sim — acima do valor de cima, a loja paga</option>
+        </select>
+        <span className={dica}>
+          Ligado, quem passa do valor não paga frete — mas a etiqueta no Melhor
+          Envio continua sendo cobrada de você. Fica no seu bolso.
         </span>
       </label>
 
@@ -133,7 +137,7 @@ export function FormConfig({ config }: { config: Record<string, unknown> }) {
           name="entrega_texto"
           rows={3}
           defaultValue={v("entrega_texto")}
-          placeholder="Retirada combinada ou entrega na região."
+          placeholder="Enviamos pelos Correios pro Brasil todo, ou dá pra combinar a retirada."
           className={campo}
         />
         <span className={dica}>

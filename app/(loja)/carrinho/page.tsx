@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Carrinho } from "@/componentes/Carrinho";
 import { pagamentoConfigurado } from "@/lib/mercadopago";
+import { freteConfigurado } from "@/lib/frete";
 import { lerConfig } from "@/lib/produtos";
 
 export const metadata: Metadata = { title: "Carrinho", robots: { index: false } };
@@ -17,8 +18,10 @@ export default async function PaginaCarrinho() {
     <Carrinho
       config={{
         descontoPixPct: numero(config.desconto_pix_pct),
-        freteLocalCentavos: numero(config.frete_local_centavos),
         freteGratisAcimaCentavos: numero(config.frete_gratis_acima_centavos),
+        // o painel salva texto ("true"); a migration semeia booleano
+        freteGratisCorreios: String(config.frete_gratis_correios) === "true",
+        freteLigado: freteConfigurado(),
         entregaTexto: String(config.entrega_texto ?? ""),
         parcelasSemJuros: numero(config.parcelas_sem_juros, 3),
         pagamentoLigado: pagamentoConfigurado(),

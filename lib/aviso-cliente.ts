@@ -20,7 +20,11 @@ type Pedido = {
   cliente_telefone: string;
   entrega_tipo: EntregaTipo;
   precisa_estorno: boolean;
+  rastreio?: string | null;
 };
+
+/** Página pública dos Correios: o cliente cola o código e vê onde está. */
+export const RASTREIO_CORREIOS = "https://rastreamento.correios.com.br/app/index.php";
 
 /** Telefone salvo só com dígitos, sem DDI. O WhatsApp quer 55 + DDD + número. */
 export function telefoneWhatsApp(telefone: string): string | null {
@@ -35,6 +39,7 @@ export function mensagemPraCliente(pedido: Pedido, site: string): string | null 
   const link = `${site.replace(/\/$/, "")}/pedido/${pedido.id}`;
   const oi = `Oi, ${nome}! Aqui é da Mó Visão.`;
   const retirada = pedido.entrega_tipo === "retirada";
+  const correios = pedido.entrega_tipo === "correios";
 
   if (pedido.precisa_estorno && pedido.status === "expirado") {
     return `${oi} Teu pagamento do pedido ${pedido.numero} entrou depois do prazo e a peça já tinha saído — desculpa. O dinheiro volta inteiro pelo mesmo meio que tu pagou. Qualquer coisa, me chama aqui.`;
@@ -45,11 +50,20 @@ export function mensagemPraCliente(pedido: Pedido, site: string): string | null 
       return `${oi} Recebi teu pagamento do pedido ${pedido.numero}. ${
         retirada
           ? "Qual dia e horário ficam bons pra tu buscar?"
-          : "Me confirma o melhor dia e horário pra entrega?"
+          : correios
+            ? "Vou postar nos Correios e te mando o código de rastreio aqui."
+            : "Me confirma o melhor dia e horário pra entrega?"
       } Acompanha o pedido por aqui: ${link}`;
     case "separado":
+      if (correios && pedido.rastreio) {
+        return `${oi} Teu pedido ${pedido.numero} foi postado nos Correios. Código de rastreio: ${pedido.rastreio} — dá pra acompanhar em ${RASTREIO_CORREIOS}. Teu pedido: ${link}`;
+      }
       return `${oi} Teu pedido ${pedido.numero} tá separado ${
-        retirada ? "e pronto pra retirar" : "e pronto pra sair pra entrega"
+        retirada
+          ? "e pronto pra retirar"
+          : correios
+            ? "e sai nos Correios nos próximos dias. Assim que postar, te mando o rastreio"
+            : "e pronto pra sair pra entrega"
       }. Acompanha por aqui: ${link}`;
     case "entregue":
       return `${oi} Valeu pela compra! Qualquer coisa com o óculos, me chama aqui. Troca e devolução: ${site.replace(/\/$/, "")}/trocas-e-devolucoes`;
