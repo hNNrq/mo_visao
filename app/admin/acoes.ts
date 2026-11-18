@@ -6,6 +6,7 @@ import { z } from "zod";
 import { exigirAdmin, mensagemDeErro } from "@/lib/admin";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { slugificar } from "@/lib/format";
+import type { ProdutoFoto } from "@/lib/types";
 
 /**
  * Ações do painel.
@@ -253,10 +254,15 @@ export async function excluirProduto(id: string): Promise<Resultado> {
 // ============================================================
 
 /** O arquivo sobe direto do navegador pro Storage; aqui só registra o caminho. */
+/**
+ * Devolve as linhas criadas: a tela precisa do id de verdade pra mudar a ordem
+ * ou apagar a foto antes de recarregar — com id provisório o banco recusava.
+ */
 export async function registrarFotos(
   produtoId: string,
   caminhos: string[]
-): Promise<Resultado> {
+): Promise<Resultado & { fotos?: ProdutoFoto[] }> {
+  let fotos: ProdutoFoto[] = [];
   try {
     const { supabase } = await exigirAdmin();
 
@@ -269,21 +275,26 @@ export async function registrarFotos(
 
     const inicio = (existentes?.[0]?.ordem ?? -1) + 1;
 
-    const { error } = await supabase.from("produto_fotos").insert(
-      caminhos.map((storage_path, i) => ({
-        produto_id: produtoId,
-        storage_path,
-        ordem: inicio + i,
-      }))
-    );
+    const { data, error } = await supabase
+      .from("produto_fotos")
+      .insert(
+        caminhos.map((storage_path, i) => ({
+          produto_id: produtoId,
+          storage_path,
+          ordem: inicio + i,
+        }))
+      )
+      .select("id, produto_id, storage_path, alt, ordem")
+      .order("ordem");
     if (error) throw error;
+    fotos = (data ?? []) as ProdutoFoto[];
   } catch (e) {
     return { ok: false, erro: mensagemDeErro(e) };
   }
 
   revalidatePath(`/admin/produtos/${produtoId}`);
   revalidarVitrine();
-  return { ok: true };
+  return { ok: true, fotos };
 }
 
 export async function excluirFoto(fotoId: string, produtoId: string): Promise<Resultado> {

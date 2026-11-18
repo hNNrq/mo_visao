@@ -80,17 +80,8 @@ export function GerenciadorFotos({
       const r = await registrarFotos(produtoId, caminhos);
       if (!r.ok) throw new Error(r.erro);
 
-      // otimista: mostra na hora, o revalidate do servidor confirma depois
-      setFotos((atuais) => [
-        ...atuais,
-        ...caminhos.map((storage_path, i) => ({
-          id: `novo-${i}-${storage_path}`,
-          produto_id: produtoId,
-          storage_path,
-          alt: null,
-          ordem: atuais.length + i,
-        })),
-      ]);
+      // com o id do banco: mudar a ordem ou apagar logo em seguida funciona
+      setFotos((atuais) => [...atuais, ...(r.fotos ?? [])]);
       setStatus({ enviando: false, total: 0, feitos: 0, erro: null });
     } catch (e) {
       setStatus({
